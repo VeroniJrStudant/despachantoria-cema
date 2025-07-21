@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema de controle financeiro de serviços da CEMA Imobiliária com integração ao Google Sheets.">
+    <link rel="stylesheet" href="style.css">
+    <title>CEMA Imobiliária - Controle Financeiro Serviços</title>
+</head>
+<body>
+    <div class="header">
+        <h1>CEMA IMOBILIÁRIA</h1>
+        <h2>Controle Financeiro - Setor de Serviços</h2>
+        <p>Integração com Google Sheets</p>
+    </div>
+    <div id="status" class="status" style="display: none;"></div>
+    <main>
+        <section class="config-section">
+            <h3>⚙️ Configuração Google Sheets</h3>
+            <div class="config-grid">
+                <div>
+                    <label for="spreadsheetId">ID da Planilha:</label>
+                    <input type="text" id="spreadsheetId" class="config-input" value="1U0YVc5vJb5DgNx7-FhO-po8gG2NYwf3nQsIV_6HuXb0" placeholder="ID da sua planilha Google Sheets" name="spreadsheetId">
+                </div>
+                <div>
+                    <label for="clientId">Client ID OAuth2:</label>
+                    <input type="text" id="clientId" class="config-input" placeholder="Seu Client ID OAuth2" name="clientId">
+                </div>
+            </div>
+            <div class="oauth-section">
+                <button id="loginButton" class="btn btn-oauth" onclick="iniciarLoginOAuth2()">🔐 Fazer Login com Google</button>
+                <button id="logoutButton" class="btn btn-logout" onclick="fazerLogout()" style="display: none;">🚪 Sair</button>
+                <button class="btn btn-test" onclick="testarAutenticacao()" style="background-color: #f39c12; margin-left: 10px;">🧪 Testar Autenticação</button>
+                <div id="userInfo" class="user-info" style="display: none;">
+                    <span id="userName"></span>
+                    <span id="userEmail"></span>
+                </div>
+            </div>
+            <p class="config-help">
+                <strong>Como configurar OAuth2:</strong><br>
+                1. Acesse <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a><br>
+                2. Crie um projeto ou selecione um existente<br>
+                3. Ative a Google Sheets API<br>
+                4. Vá em "Credentials" → "Create Credentials" → "OAuth 2.0 Client IDs"<br>
+                5. Configure como "Web application"<br>
+                6. Adicione "http://localhost:8000" e "http://127.0.0.1:8000" como URIs autorizados<br>
+                7. Copie o Client ID e cole no campo acima<br>
+                8. Clique em "Fazer Login com Google"
+            </p>
+        </section>
+        <section class="month-selector">
+            <label for="mes">Mês/Ano: </label>
+            <select id="mes">
+                <option value="2025-01">Janeiro</option>
+                <option value="2025-02">Fevereiro</option>
+                <option value="2025-03">Março</option>
+                <option value="2025-04">Abril</option>
+                <option value="2025-05">Maio</option>
+                <option value="2025-06">Junho</option>
+                <option value="2025-07" selected>Julho</option>
+                <option value="2025-08">Agosto</option>
+                <option value="2025-09">Setembro</option>
+                <option value="2025-10">Outubro</option>
+                <option value="2025-11">Novembro</option>
+                <option value="2025-12">Dezembro</option>
+            </select>
+        </section>
+        <section class="partners-section">
+            <h3>🤝 Parceiros</h3>
+            <div class="partners-container">
+                <div class="partners-list" id="partnersList">
+                    <!-- Parceiros serão adicionados dinamicamente -->
+                </div>
+                <div class="add-partner-form">
+                    <input type="text" id="partnerName" placeholder="Nome do parceiro" class="partner-input">
+                    <input type="number" id="partnerPercentage" placeholder="Percentual (%)" class="partner-input" min="0" max="100" step="0.01">
+                    <button class="btn btn-add" onclick="adicionarParceiro()">+ Adicionar Parceiro</button>
+                </div>
+            </div>
+            <p class="partners-help">
+                <strong>Nota:</strong> A soma dos percentuais dos parceiros deve ser 35%. O percentual restante (65%) é da CEMA.
+            </p>
+        </section>
+        <section class="services-reference">
+            <h3>💰 Tabela de Serviços e Valores</h3>
+            <div class="services-grid">
+                <div class="service-item">
+                    <span>Registro com financiamento</span>
+                    <span><strong>R$ 800,00</strong></span>
+                </div>
+                <div class="service-item">
+                    <span>Registro à vista</span>
+                    <span><strong>R$ 500,00</strong></span>
+                </div>
+                <div class="service-item">
+                    <span>Averbação</span>
+                    <span><strong>R$ 300,00</strong></span>
+                </div>
+                <div class="service-item">
+                    <span>Guia de Laudêmio do SPU</span>
+                    <span><strong>R$ 100,00</strong></span>
+                </div>
+                <div class="service-item">
+                    <span>Laudêmio da prefeitura</span>
+                    <span><strong>R$ 700,00</strong></span>
+                </div>
+                <div class="service-item">
+                    <span>Laudêmio das famílias</span>
+                    <span><strong>R$ 700,00</strong></span>
+                </div>
+                <div class="service-item">
+                    <span>Laudêmio do São Bento</span>
+                    <span><strong>R$ 700,00</strong></span>
+                </div>
+                <div class="service-item">
+                    <span>Laudêmio da Igreja da Glória</span>
+                    <span><strong>R$ 700,00</strong></span>
+                </div>
+                <div class="service-item">
+                    <span>Laudêmio da Mitra</span>
+                    <span><strong>R$ 700,00</strong></span>
+                </div>
+                <div class="service-item">
+                    <span>Emissão de guia de ITBI</span>
+                    <span><strong>R$ 100,00</strong></span>
+                </div>
+                <div class="service-item">
+                    <span>Emissão de certidão por nome</span>
+                    <span><strong>R$ 100,00</strong></span>
+                </div>
+                <div class="service-item">
+                    <span>Transferência de conta</span>
+                    <span><strong>R$ 100,00</strong></span>
+                </div>
+            </div>
+        </section>
+        <div class="centered-actions">
+            <button class="btn btn-add" onclick="adicionarLinha()">+ Adicionar Novo Serviço</button>
+            <button class="btn btn-sync" onclick="enviarParaGoogleSheets()">📤 Enviar para Google Sheets</button>
+            <button class="btn btn-load" onclick="carregarDadosGoogleSheets()">📥 Carregar do Google Sheets</button>
+        </div>
+
+        <div id="status" class="status"></div>
+        <section class="services-table">
+            <table id="tabelaServicos">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Cliente Comprador</th>
+                        <th>Tel. Comprador</th>
+                        <th>Cliente Vendedor</th>
+                        <th>Tel. Vendedor</th>
+                        <th>Endereço Imóvel</th>
+                        <th>Tipo de Serviço</th>
+                        <th>Contrato</th>
+                        <th>RGI</th>
+                        <th>Protocolo</th>
+                        <th>Valor Cobrado</th>
+                        <th>Despesas</th>
+                        <th>CEMA (65%)</th>
+                        <th>Parceiros (35%)</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela">
+                    <!-- Linhas serão adicionadas dinamicamente -->
+                </tbody>
+            </table>
+        </section>
+        <section class="summary">
+            <div class="summary-card">
+                <h3>Resumo Mensal</h3>
+                <div>Total Faturado: <span class="summary-value" id="totalFaturado">R$ 0,00</span></div>
+                <div>Total Despesas: <span class="summary-value" id="totalDespesas">R$ 0,00</span></div>
+                <div>Líquido: <span class="summary-value" id="totalLiquido">R$ 0,00</span></div>
+            </div>
+            <div class="summary-card">
+                <h3>CEMA (65%)</h3>
+                <div>Valor Bruto: <span class="summary-value" id="cemaBruto">R$ 0,00</span></div>
+                <div>Despesas: <span class="summary-value" id="cemaDespesas">R$ 0,00</span></div>
+                <div>Valor Líquido: <span class="summary-value" id="cemaLiquido">R$ 0,00</span></div>
+            </div>
+            <div class="summary-card">
+                <h3>Parceiros (35%)</h3>
+                <div id="partnersSummary">
+                    <!-- Resumo dos parceiros será adicionado dinamicamente -->
+                </div>
+            </div>
+                  </section>
+      </main>
+    
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 CEMA Imobiliária - Sistema de Controle Financeiro</p>
+            <p>Desenvolvido com ❤️ para otimizar seus processos</p>
+        </div>
+    </footer>
+    
+    <script src="script.js"></script>
+    <script src="teste-autenticacao.js"></script>
+    <script src="teste-completo.js"></script>
+    <script src="teste-alertas.js"></script>
+</body>
+</html>
