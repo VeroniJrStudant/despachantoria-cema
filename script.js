@@ -186,7 +186,25 @@
   }
 
   // Funções para gerenciar parceiros
+  function mostrarAlertaParceiro(msg) {
+    const alertDiv = document.getElementById("partnerAlert");
+    if (alertDiv) {
+      alertDiv.textContent = msg;
+      alertDiv.style.display = "block";
+      // Some após 4 segundos
+      clearTimeout(window._partnerAlertTimeout);
+      window._partnerAlertTimeout = setTimeout(() => {
+        alertDiv.style.display = "none";
+      }, 4000);
+    }
+  }
+
+  // Atualizar função adicionarParceiro para mostrar alerta se inválido
   function adicionarParceiro() {
+    if (!validarCamposParceiro()) {
+      mostrarAlertaParceiro("Preencha corretamente todos os campos para adicionar um parceiro.");
+      return;
+    }
     const nome = document.getElementById("partnerName").value.trim();
     const percentual = parseFloat(document.getElementById("partnerPercentage").value);
 
@@ -209,10 +227,10 @@
     // Calcular percentual total atual
     const percentualTotal = parceiros.reduce((total, p) => total + p.percentual, 0) + percentual;
     
-    if (percentualTotal > 35) {
-      mostrarStatus(`Percentual total excede 35%. Atual: ${percentualTotal.toFixed(2)}%`, "error");
-      return;
-    }
+    // if (percentualTotal > 35) {
+    //   mostrarStatus(`Percentual total excede 35%. Atual: ${percentualTotal.toFixed(2)}%`, "error");
+    //   return;
+    // }
 
     // Adicionar parceiro
     parceiros.push({ nome, percentual });
@@ -458,7 +476,6 @@
       mostrarStatus("Por favor, faça login com Google primeiro", "error");
       return;
     }
-
     if (!spreadsheetId) {
       mostrarStatus("Por favor, configure o ID da planilha", "error");
       return;
@@ -1001,6 +1018,49 @@
     }
   }
 
+  // Validação dos campos de parceiro
+  function validarCamposParceiro() {
+    const nomeInput = document.getElementById("partnerName");
+    const percentualInput = document.getElementById("partnerPercentage");
+    const btnAdd = document.getElementById("btnAddPartner");
+    const nomeFeedback = document.getElementById("partnerNameFeedback");
+    const percentualFeedback = document.getElementById("partnerPercentageFeedback");
+
+    let nome = nomeInput.value.trim();
+    let percentual = percentualInput.value.trim();
+    let percentualNum = parseFloat(percentual);
+    let nomeValido = nome.length > 0;
+    let percentualValido = percentual.length > 0 && !isNaN(percentualNum) && percentualNum > 0 && percentualNum <= 100;
+
+    // Reset classes e feedback
+    nomeInput.classList.remove("is-invalid", "is-valid");
+    percentualInput.classList.remove("is-invalid", "is-valid");
+    nomeFeedback.style.display = "none";
+    percentualFeedback.style.display = "none";
+
+    // Validação visual estilo Bootstrap
+    if (!nomeValido && nome.length > 0) {
+      nomeInput.classList.add("is-invalid");
+      nomeFeedback.style.display = "block";
+    } else if (nomeValido) {
+      nomeInput.classList.add("is-valid");
+    }
+    if (!percentualValido && percentual.length > 0) {
+      percentualInput.classList.add("is-invalid");
+      percentualFeedback.style.display = "block";
+    } else if (percentualValido) {
+      percentualInput.classList.add("is-valid");
+    }
+
+    if (nomeValido && percentualValido) {
+      btnAdd.disabled = false;
+      return true;
+    } else {
+      btnAdd.disabled = true;
+      return false;
+    }
+  }
+
   // Inicialização
   document.addEventListener("DOMContentLoaded", function () {
     carregarConfiguracoes();
@@ -1057,4 +1117,7 @@
   window.verificarTokenSalvo = verificarTokenSalvo;
   window.fazerLogout = fazerLogout;
   window.mostrarAlertaSucesso = mostrarAlertaSucesso;
+  window.validarCamposParceiro = validarCamposParceiro;
+  window.mostrarAlertaParceiro = mostrarAlertaParceiro;
 })();
+

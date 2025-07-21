@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Sistema de controle financeiro de serviços da CEMA Imobiliária com integração ao Google Sheets.">
+    <meta name="description"
+        content="Sistema de controle financeiro de serviços da CEMA Imobiliária com integração ao Google Sheets.">
     <link rel="stylesheet" href="style.css">
+
     <title>CEMA Imobiliária - Controle Financeiro Serviços</title>
 </head>
+
 <body>
     <div class="header">
         <h1>CEMA IMOBILIÁRIA</h1>
@@ -19,21 +23,26 @@
             <h3>⚙️ Configuração Google Sheets</h3>
             <div class="config-grid">
                 <div>
-                    <label for="spreadsheetId">ID da Planilha:</label>
-                    <input type="text" id="spreadsheetId" class="config-input" value="1U0YVc5vJb5DgNx7-FhO-po8gG2NYwf3nQsIV_6HuXb0" placeholder="ID da sua planilha Google Sheets" name="spreadsheetId">
+                    <div class="label-float input-password">
+                        <input type="password" id="spreadsheetId" class="config-input" placeholder=" "
+                            name="spreadsheetId" value="1U0YVc5vJb5DgNx7-FhO-po8gG2NYwf3nQsIV_6HuXb0" required>
+                        <label for="spreadsheetId">ID da Planilha</label>
+                        <img src="https://cdn0.iconfinder.com/data/icons/ui-icons-pack/100/ui-icon-pack-14-512.png"
+                            id="olho-spreadsheet" class="olho" alt="Mostrar senha">
+                    </div>
                 </div>
                 <div>
-                    <label for="clientId">Client ID OAuth2:</label>
-                    <input type="text" id="clientId" class="config-input" placeholder="Seu Client ID OAuth2" name="clientId">
+                    <div class="label-float input-password">
+                        <input type="password" id="clientId" class="config-input" placeholder=" " name="clientId"
+                            required>
+                        <label for="clientId">Client ID OAuth2</label>
+                        <img src="https://cdn0.iconfinder.com/data/icons/ui-icons-pack/100/ui-icon-pack-14-512.png"
+                            id="olho-client" class="olho" alt="Mostrar senha">
+                    </div>
                 </div>
-            </div>
-            <div class="oauth-section">
-                <button id="loginButton" class="btn btn-oauth" onclick="iniciarLoginOAuth2()">🔐 Fazer Login com Google</button>
-                <button id="logoutButton" class="btn btn-logout" onclick="fazerLogout()" style="display: none;">🚪 Sair</button>
-                <button class="btn btn-test" onclick="testarAutenticacao()" style="background-color: #f39c12; margin-left: 10px;">🧪 Testar Autenticação</button>
-                <div id="userInfo" class="user-info" style="display: none;">
-                    <span id="userName"></span>
-                    <span id="userEmail"></span>
+                <div style="display: flex; align-items: flex-end; min-width: 180px;">
+                    <button id="loginButton" class="btn btn-oauth" onclick="iniciarLoginOAuth2()">🔐 Fazer Login com
+                        Google</button>
                 </div>
             </div>
             <p class="config-help">
@@ -71,14 +80,27 @@
                 <div class="partners-list" id="partnersList">
                     <!-- Parceiros serão adicionados dinamicamente -->
                 </div>
-                <div class="add-partner-form">
-                    <input type="text" id="partnerName" placeholder="Nome do parceiro" class="partner-input">
-                    <input type="number" id="partnerPercentage" placeholder="Percentual (%)" class="partner-input" min="0" max="100" step="0.01">
-                    <button class="btn btn-add" onclick="adicionarParceiro()">+ Adicionar Parceiro</button>
+                <div id="partnerAlert" class="alert alert-danger"
+                    style="display:none; margin-bottom: 10px; padding: 8px 12px; font-size: 1em;" role="alert"></div>
+                <div class="add-partner-form was-validated">
+                    <div id="input-name-parceiro" class="label-float">
+                        <input type="text" id="partnerName" class="partner-input" placeholder=" " onfocus="this.classList.add('is-focused')" onblur="this.classList.remove('is-focused')" oninput="validarCamposParceiro()" required>
+                        <label for="partnerName">Nome do parceiro</label>
+                        <div class="invalid-feedback" id="partnerNameFeedback">Preencha o nome do parceiro.</div>
+                    </div>
+                    <div class="label-float">
+                        <input type="number" id="partnerPercentage" class="partner-input" placeholder=" " min="0" max="100" step="0.01" onfocus="this.classList.add('is-focused')" onblur="this.classList.remove('is-focused')" oninput="validarCamposParceiro()" required>
+                        <label for="partnerPercentage">Percentual (%)</label>
+                        <div class="invalid-feedback" id="partnerPercentageFeedback">Percentual deve ser maior que 0 e menor ou igual a 100.</div>
+                    </div>
+                    <button class="btn btn-add" id="btnAddPartner" onclick="adicionarParceiro()">+ Adicionar Parceiro</button>
+                </div>
+                <div id="partnerInputError" style="color: #e74c3c; font-size: 0.95em; margin-top: 4px; display: none;">
                 </div>
             </div>
             <p class="partners-help">
-                <strong>Nota:</strong> A soma dos percentuais dos parceiros deve ser 35%. O percentual restante (65%) é da CEMA.
+                <strong>Nota:</strong> A soma dos percentuais dos parceiros deve ser 35%. O percentual restante (65%) é
+                da CEMA.
             </p>
         </section>
         <section class="services-reference">
@@ -197,8 +219,39 @@
     </footer>
     
     <script src="script.js"></script>
-    <script src="teste-autenticacao.js"></script>
-    <script src="teste-completo.js"></script>
-    <script src="teste-alertas.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // ID da Planilha
+            const olhoSpreadsheet = document.getElementById('olho-spreadsheet');
+            const inputSpreadsheet = document.getElementById('spreadsheetId');
+            if (olhoSpreadsheet && inputSpreadsheet) {
+                olhoSpreadsheet.addEventListener('click', function () {
+                    if (inputSpreadsheet.type === 'password') {
+                        inputSpreadsheet.type = 'text';
+                        olhoSpreadsheet.style.opacity = 0.5; // opcional: visual feedback
+                    } else {
+                        inputSpreadsheet.type = 'password';
+                        olhoSpreadsheet.style.opacity = 1;
+                    }
+                });
+            }
+
+            // Client ID OAuth2
+            const olhoClient = document.getElementById('olho-client');
+            const inputClient = document.getElementById('clientId');
+            if (olhoClient && inputClient) {
+                olhoClient.addEventListener('click', function () {
+                    if (inputClient.type === 'password') {
+                        inputClient.type = 'text';
+                        olhoClient.style.opacity = 0.5; // opcional: visual feedback
+                    } else {
+                        inputClient.type = 'password';
+                        olhoClient.style.opacity = 1;
+                    }
+                });
+            }
+        });
+    </script>
 </body>
+
 </html>
