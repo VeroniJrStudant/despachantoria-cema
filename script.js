@@ -333,7 +333,8 @@
                 <td><input type="number" step="0.01" class="valor-field" placeholder="0,00" onchange="calcularValores()"></td>
                 <td class="valor-field" style="background-color: #e8f5e8;">R$ 0,00</td>
                 <td class="valor-field" style="background-color: #f0f8ff;">R$ 0,00</td>
-                <td><button onclick="removerLinha(this)" style="background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Remover</button></td>
+                <td><input type="text" class="status-input" placeholder="Status"></td>
+                <td class="acao"><button class="btn-remove" onclick="removerLinha(this)">Remover</button></td>
             `;
 
     tbody.appendChild(novaLinha);
@@ -503,7 +504,7 @@
         "Despesas",
         "CEMA (65%)",
         "Parceiros (35%)",
-        "Mês/Ano",
+        "Status",
         "Parceiros Configurados"
       ]);
 
@@ -513,6 +514,8 @@
         const inputs = linha.querySelectorAll("input, select");
         const valorCobrado = parseFloat(inputs[10].value) || 0;
         const despesas = parseFloat(inputs[11].value) || 0;
+        const statusInput = linha.querySelector('.status-input');
+        const status = statusInput ? statusInput.value : "";
 
         if (valorCobrado > 0) {
           const valorCema = valorCobrado * 0.65 - despesas;
@@ -533,7 +536,7 @@
             despesas,
             valorCema,
             valorParceiros,
-            mesAno,
+            status,
             parceiros.map(p => `${p.nome} (${p.percentual}%)`).join(", ") || "Nenhum"
           ]);
         }
@@ -544,7 +547,7 @@
 
       // Primeiro, tentar criar a aba
       try {
-        const createSheetResponse = await fetch(
+        await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
           {
             method: "POST",
@@ -569,37 +572,31 @@
         // Aba já existe, continuar
       }
 
-      // Enviar dados para a aba
-      const response = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A1:clear`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${accessToken}`
+      // Enviar dados para a aba usando append (NÃO sobrescrever)
+      // Não envie o cabeçalho, só os dados das linhas
+      if (dados.length > 1) {
+        const appendResponse = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A1:append?valueInputOption=RAW`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+              values: dados.slice(1), // só os dados, sem o cabeçalho
+            }),
           }
-        },
-      );
+        );
 
-      const updateResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A1?valueInputOption=RAW`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`
-          },
-          body: JSON.stringify({
-            values: dados,
-          }),
-        },
-      );
-
-      if (updateResponse.ok) {
-        const mensagemSucesso = `Dados enviados com sucesso para Google Sheets!\n\nPlanilha: ${spreadsheetId}\nMês: ${mesAno}\nRegistros enviados: ${dados.length - 1}\nAba criada: ${sheetName}`;
-        mostrarStatus(mensagemSucesso, "success");
+        if (appendResponse.ok) {
+          mostrarStatus("Dados adicionados com sucesso ao Google Sheets!", "success");
+        } else {
+          const error = await appendResponse.json();
+          mostrarStatus(`Erro ao adicionar dados: ${error.error.message}`, "error");
+        }
       } else {
-        const error = await updateResponse.json();
-        mostrarStatus(`Erro ao enviar dados: ${error.error.message}`, "error");
+        mostrarStatus("Nenhum dado para enviar.", "info");
       }
     } catch (error) {
       mostrarStatus(
@@ -761,7 +758,8 @@
                                     }" onchange="calcularValores()"></td>
                                     <td class="valor-field" style="background-color: #e8f5e8;">R$ 0,00</td>
                                     <td class="valor-field" style="background-color: #f0f8ff;">R$ 0,00</td>
-                                    <td><button onclick="removerLinha(this)" style="background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Remover</button></td>
+                                    <td><input type="text" class="status-input" value="${row[14] || ''}" placeholder="Status"></td>
+                                    <td class="acao"><button class="btn-remove" onclick="removerLinha(this)">Remover</button></td>
                                 `;
 
               tbody.appendChild(novaLinha);

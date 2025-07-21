@@ -399,20 +399,20 @@ table {
 }
 
 th {
+  min-width: 140px;
   background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
   color: white;
   padding: 16px 12px;
-  text-align: left;
+  text-align: center;
   font-weight: 600;
   font-size: 13px;
-  border-bottom: 3px solid #2c3e50;
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
 td {
-  padding: 12px;
+  padding: 10px 2px;
   border-bottom: 1px solid #ecf0f1;
   font-size: 13px;
   vertical-align: middle;
@@ -887,4 +887,25 @@ select:focus {
   z-index: 2;
   transition: opacity 0.2s;
   background: f8f9fa;
+}
+
+.btn-remove {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  margin: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s;
+}
+.btn-remove:hover {
+  background-color: #c0392b;
+}
+
+.services-table td.acao,
+.services-table td:last-child {
+  text-align: center;
+  vertical-align: middle;
 }
