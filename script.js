@@ -125,6 +125,12 @@
       
       const mensagemSucesso = `Login realizado com sucesso!\n\nToken de acesso obtido\nSessão iniciada\nRedirecionando...`;
       mostrarStatus(mensagemSucesso, "success");
+      // Iniciar temporizador de expiração do token (30 minutos)
+      if (window._oauthExpireTimeout) clearTimeout(window._oauthExpireTimeout);
+      window._oauthExpireTimeout = setTimeout(() => {
+        fazerLogout();
+        mostrarStatus("Sessão expirada. Faça login novamente.", "error");
+      }, 30 * 60 * 1000); // 30 minutos
     }
   }
 
@@ -472,16 +478,30 @@
   async function enviarParaGoogleSheets() {
     const spreadsheetId = document.getElementById("spreadsheetId").value;
     const mesAno = document.getElementById("mes").selectedOptions[0].text;
-
+    const clientId = document.getElementById("clientId").value.trim();
     if (!accessToken) {
-      mostrarStatus("Por favor, faça login com Google primeiro", "error");
+      mostrarAlertaCentralizado("Por favor, faça login com Google primeiro");
       return;
     }
     if (!spreadsheetId) {
       mostrarStatus("Por favor, configure o ID da planilha", "error");
       return;
     }
-
+    if (!clientId) {
+      mostrarAlertaCentralizado("Por favor, preencha o Client ID OAuth2 antes de enviar.");
+      return;
+    }
+    if (!parceiros || parceiros.length === 0) {
+      mostrarAlertaCentralizado("Por favor, adicione pelo menos um parceiro antes de enviar.");
+      return;
+    }
+    // Validação dos campos de parceiros
+    for (const parceiro of parceiros) {
+      if (!parceiro.nome || parceiro.nome.trim() === "" || parceiro.percentual === undefined || parceiro.percentual === null || parceiro.percentual === "" || isNaN(parceiro.percentual) || parceiro.percentual <= 0) {
+        mostrarAlertaCentralizado("Preencha corretamente o nome e o percentual de todos os parceiros antes de enviar.");
+        return;
+      }
+    }
     mostrarStatus("Enviando dados para Google Sheets...", "info");
 
     try {
@@ -1057,6 +1077,24 @@
       btnAdd.disabled = true;
       return false;
     }
+  }
+
+  // Função para mostrar alerta centralizado na tela
+  function mostrarAlertaCentralizado(msg) {
+    let alerta = document.getElementById('centeredAlert');
+    if (!alerta) {
+      alerta = document.createElement('div');
+      alerta.id = 'centeredAlert';
+      alerta.className = 'centered-alert';
+      document.body.appendChild(alerta);
+    }
+    alerta.textContent = msg;
+    alerta.style.display = 'block';
+    // Esconde após 3 segundos
+    clearTimeout(window._centeredAlertTimeout);
+    window._centeredAlertTimeout = setTimeout(() => {
+      alerta.style.display = 'none';
+    }, 3000);
   }
 
   // Inicialização

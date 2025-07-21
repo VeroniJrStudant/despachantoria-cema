@@ -909,3 +909,27 @@ select:focus {
   text-align: center;
   vertical-align: middle;
 }
+
+.centered-alert {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  color: #222;
+  border-radius: 12px;
+  box-shadow: 0 4px 32px 0 rgba(60,60,60,0.18);
+  padding: 32px 36px;
+  font-size: 1.25em;
+  font-weight: 600;
+  z-index: 9999;
+  text-align: center;
+  min-width: 280px;
+  max-width: 90vw;
+  border: 2px solid #e74c3c;
+  animation: fadeInScale 0.2s;
+}
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.9) translate(-50%, -50%); }
+  to { opacity: 1; transform: scale(1) translate(-50%, -50%); }
+}
