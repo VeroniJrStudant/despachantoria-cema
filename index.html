@@ -25,7 +25,7 @@
                 <div>
                     <div class="label-float input-password">
                         <input type="password" id="spreadsheetId" class="config-input" placeholder=" "
-                            name="spreadsheetId" value="1U0YVc5vJb5DgNx7-FhO-po8gG2NYwf3nQsIV_6HuXb0" required>
+                            name="spreadsheetId" value="" required>
                         <label for="spreadsheetId">ID da Planilha</label>
                         <img src="https://cdn0.iconfinder.com/data/icons/ui-icons-pack/100/ui-icon-pack-14-512.png"
                             id="olho-spreadsheet" class="olho" alt="Mostrar senha">
@@ -105,55 +105,60 @@
         </section>
         <section class="services-reference">
             <h3>💰 Tabela de Serviços e Valores</h3>
-            <div class="services-grid">
+            <div class="services-grid" id="servicesGrid">
                 <div class="service-item">
                     <span>Registro com financiamento</span>
-                    <span><strong>R$ 800,00</strong></span>
+                    <input type="number" class="service-value-input" data-nome="Registro com financiamento" value="800" min="0" step="0.01" style="width: 90px; margin-left: 8px;"> 
                 </div>
                 <div class="service-item">
                     <span>Registro à vista</span>
-                    <span><strong>R$ 500,00</strong></span>
+                    <input type="number" class="service-value-input" data-nome="Registro à vista" value="500" min="0" step="0.01" style="width: 90px; margin-left: 8px;"> 
                 </div>
                 <div class="service-item">
                     <span>Averbação</span>
-                    <span><strong>R$ 300,00</strong></span>
+                    <input type="number" class="service-value-input" data-nome="Averbação" value="300" min="0" step="0.01" style="width: 90px; margin-left: 8px;"> 
                 </div>
                 <div class="service-item">
                     <span>Guia de Laudêmio do SPU</span>
-                    <span><strong>R$ 100,00</strong></span>
+                    <input type="number" class="service-value-input" data-nome="Guia de Laudêmio do SPU" value="100" min="0" step="0.01" style="width: 90px; margin-left: 8px;"> 
                 </div>
                 <div class="service-item">
                     <span>Laudêmio da prefeitura</span>
-                    <span><strong>R$ 700,00</strong></span>
+                    <input type="number" class="service-value-input" data-nome="Laudêmio da prefeitura" value="700" min="0" step="0.01" style="width: 90px; margin-left: 8px;"> 
                 </div>
                 <div class="service-item">
                     <span>Laudêmio das famílias</span>
-                    <span><strong>R$ 700,00</strong></span>
+                    <input type="number" class="service-value-input" data-nome="Laudêmio das famílias" value="700" min="0" step="0.01" style="width: 90px; margin-left: 8px;"> 
                 </div>
                 <div class="service-item">
                     <span>Laudêmio do São Bento</span>
-                    <span><strong>R$ 700,00</strong></span>
+                    <input type="number" class="service-value-input" data-nome="Laudêmio do São Bento" value="700" min="0" step="0.01" style="width: 90px; margin-left: 8px;"> 
                 </div>
                 <div class="service-item">
                     <span>Laudêmio da Igreja da Glória</span>
-                    <span><strong>R$ 700,00</strong></span>
+                    <input type="number" class="service-value-input" data-nome="Laudêmio da Igreja da Glória" value="700" min="0" step="0.01" style="width: 90px; margin-left: 8px;"> 
                 </div>
                 <div class="service-item">
                     <span>Laudêmio da Mitra</span>
-                    <span><strong>R$ 700,00</strong></span>
+                    <input type="number" class="service-value-input" data-nome="Laudêmio da Mitra" value="700" min="0" step="0.01" style="width: 90px; margin-left: 8px;"> 
                 </div>
                 <div class="service-item">
                     <span>Emissão de guia de ITBI</span>
-                    <span><strong>R$ 100,00</strong></span>
+                    <input type="number" class="service-value-input" data-nome="Emissão de guia de ITBI" value="100" min="0" step="0.01" style="width: 90px; margin-left: 8px;"> 
                 </div>
                 <div class="service-item">
                     <span>Emissão de certidão por nome</span>
-                    <span><strong>R$ 100,00</strong></span>
+                    <input type="number" class="service-value-input" data-nome="Emissão de certidão por nome" value="100" min="0" step="0.01" style="width: 90px; margin-left: 8px;"> 
                 </div>
                 <div class="service-item">
                     <span>Transferência de conta</span>
-                    <span><strong>R$ 100,00</strong></span>
+                    <input type="number" class="service-value-input" data-nome="Transferência de conta" value="100" min="0" step="0.01" style="width: 90px; margin-left: 8px;"> 
                 </div>
+            </div>
+            <div class="add-service-form" style="margin-top: 16px; display: flex; gap: 8px; align-items: flex-end;">
+                <input type="text" id="novoServicoNome" class="partner-input" placeholder="Nome do novo serviço" style="min-width: 180px;">
+                <input type="number" id="novoServicoValor" class="partner-input" placeholder="Valor (R$)" min="0" step="0.01" style="width: 120px;">
+                <button class="btn btn-add" onclick="adicionarNovoServico()">+ Adicionar Serviço</button>
             </div>
         </section>
         <div class="centered-actions">

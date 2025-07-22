@@ -842,6 +842,7 @@
       if (response.ok) {
         const data = await response.json();
         document.getElementById("spreadsheetId").value = data.spreadsheetId;
+        salvarConfiguracoes();
 
         // Criar cabeçalho na aba de configuração
         const configData = [
@@ -880,23 +881,18 @@
 
   // Função para salvar configurações no localStorage
   function salvarConfiguracoes() {
+    const clientId = document.getElementById("clientId").value;
     const spreadsheetId = document.getElementById("spreadsheetId").value;
-
-    if (spreadsheetId) {
-      localStorage.setItem("cema_spreadsheet_id", spreadsheetId);
-    }
+    if (clientId) localStorage.setItem("cema_client_id", clientId);
+    if (spreadsheetId) localStorage.setItem("cema_spreadsheet_id", spreadsheetId);
   }
 
   // Função para carregar configurações do localStorage
   function carregarConfiguracoes() {
+    const clientId = localStorage.getItem("cema_client_id");
     const spreadsheetId = localStorage.getItem("cema_spreadsheet_id");
-
-    if (spreadsheetId) {
-      const element = document.getElementById("spreadsheetId");
-      if (element) {
-        element.value = spreadsheetId;
-      }
-    }
+    if (clientId) document.getElementById("clientId").value = clientId;
+    if (spreadsheetId) document.getElementById("spreadsheetId").value = spreadsheetId;
   }
 
   // Event listeners para salvar configurações
@@ -1097,9 +1093,86 @@
     }, 3000);
   }
 
+  // Função para adicionar novo serviço personalizado
+  function adicionarNovoServico() {
+    const nomeInput = document.getElementById('novoServicoNome');
+    const valorInput = document.getElementById('novoServicoValor');
+    const nome = nomeInput.value.trim();
+    const valor = parseFloat(valorInput.value);
+    if (!nome) {
+      mostrarAlertaCentralizado('Preencha o nome do novo serviço.');
+      return;
+    }
+    if (isNaN(valor) || valor <= 0) {
+      mostrarAlertaCentralizado('Preencha um valor válido para o novo serviço.');
+      return;
+    }
+    if (servicosValores[nome]) {
+      mostrarAlertaCentralizado('Já existe um serviço com esse nome.');
+      return;
+    }
+    // Adicionar ao objeto de valores
+    servicosValores[nome] = valor;
+    // Adicionar visualmente
+    const grid = document.getElementById('servicesGrid');
+    const div = document.createElement('div');
+    div.className = 'service-item';
+    div.innerHTML = `<span>${nome}</span><input type="number" class="service-value-input" data-nome="${nome}" value="${valor}" min="0" step="0.01" style="width: 90px; margin-left: 8px;">`;
+    grid.appendChild(div);
+    // Limpar campos
+    nomeInput.value = '';
+    valorInput.value = '';
+    // Atualizar selects de serviço nas linhas da tabela
+    atualizarSelectsServicos();
+    ativarListenersValoresServicos();
+  }
+
+  // Atualizar selects de serviço nas linhas da tabela
+  function atualizarSelectsServicos() {
+    const selects = document.querySelectorAll('#corpoTabela select');
+    selects.forEach(select => {
+      const valorAtual = select.value;
+      // Limpar opções
+      select.innerHTML = '<option value="">Selecione o serviço</option>';
+      Object.keys(servicosValores).forEach(nome => {
+        const opt = document.createElement('option');
+        opt.value = nome;
+        opt.textContent = nome;
+        if (nome === valorAtual) opt.selected = true;
+        select.appendChild(opt);
+      });
+    });
+  }
+
+  // Função para ativar listeners nos inputs de valor dos serviços
+  function ativarListenersValoresServicos() {
+    document.querySelectorAll('.service-value-input').forEach(input => {
+      input.addEventListener('input', function() {
+        const nome = input.getAttribute('data-nome');
+        const valor = parseFloat(input.value);
+        if (nome && !isNaN(valor) && valor > 0) {
+          servicosValores[nome] = valor;
+          atualizarSelectsServicos();
+        }
+      });
+    });
+  }
+
   // Inicialização
   document.addEventListener("DOMContentLoaded", function () {
+    // Carregar valores salvos antes de qualquer manipulação
     carregarConfiguracoes();
+    // Adicionar listeners após restaurar valores
+    const clientIdInput = document.getElementById("clientId");
+    const spreadsheetIdInput = document.getElementById("spreadsheetId");
+    if (clientIdInput) {
+      clientIdInput.addEventListener("input", salvarConfiguracoes);
+      clientIdInput.addEventListener("change", salvarConfiguracoes);
+    }
+    if (spreadsheetIdInput) {
+      spreadsheetIdInput.addEventListener("input", salvarConfiguracoes);
+      spreadsheetIdInput.addEventListener("change", salvarConfiguracoes);
+    }
     carregarParceiros();
     adicionarLinha();
 
@@ -1122,6 +1195,19 @@
     
     // Verificar token salvo
     verificarTokenSalvo();
+
+    // Salvar ao digitar ou mudar
+    // const clientIdInput = document.getElementById("clientId"); // Moved up
+    // const spreadsheetIdInput = document.getElementById("spreadsheetId"); // Moved up
+    // if (clientIdInput) { // Moved up
+    //   clientIdInput.addEventListener("input", salvarConfiguracoes); // Moved up
+    //   clientIdInput.addEventListener("change", salvarConfiguracoes); // Moved up
+    // }
+    // if (spreadsheetIdInput) { // Moved up
+    //   spreadsheetIdInput.addEventListener("input", salvarConfiguracoes); // Moved up
+    //   spreadsheetIdInput.addEventListener("change", salvarConfiguracoes); // Moved up
+    // }
+    ativarListenersValoresServicos();
   });
 
   // Adicionar botão para criar nova planilha
@@ -1155,5 +1241,7 @@
   window.mostrarAlertaSucesso = mostrarAlertaSucesso;
   window.validarCamposParceiro = validarCamposParceiro;
   window.mostrarAlertaParceiro = mostrarAlertaParceiro;
+  window.adicionarNovoServico = adicionarNovoServico;
+  window.atualizarSelectsServicos = atualizarSelectsServicos;
 })();
 
