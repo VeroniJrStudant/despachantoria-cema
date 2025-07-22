@@ -67,19 +67,14 @@
   // Funções OAuth2
   function iniciarLoginOAuth2() {
     const clientId = document.getElementById("clientId").value.trim();
-    
     if (!clientId) {
       mostrarStatus("Por favor, configure o Client ID OAuth2 primeiro", "error");
       return;
     }
-    
     GOOGLE_OAUTH_CONFIG.clientId = clientId;
-    
-    // Gerar state para segurança
     const state = Math.random().toString(36).substring(2, 15);
     sessionStorage.setItem('oauth_state', state);
-    
-    // Construir URL de autorização
+
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', GOOGLE_OAUTH_CONFIG.redirectUri);
@@ -87,9 +82,19 @@
     authUrl.searchParams.set('response_type', 'token');
     authUrl.searchParams.set('state', state);
     authUrl.searchParams.set('prompt', 'consent');
-    
-    // Redirecionar para autorização
-    window.location.href = authUrl.toString();
+
+    // Abre o popup
+    const popup = window.open(authUrl.toString(), 'GoogleLogin', 'width=500,height=600');
+    // Listener para receber o token do popup
+    window.addEventListener('message', function handleOAuthMessage(event) {
+      if (event.origin !== window.location.origin) return;
+      if (event.data && event.data.type === 'oauth_token') {
+        window.removeEventListener('message', handleOAuthMessage);
+        window.location.hash = event.data.hash;
+        processarCallbackOAuth2();
+        if (popup) popup.close();
+      }
+    });
   }
 
   function processarCallbackOAuth2() {

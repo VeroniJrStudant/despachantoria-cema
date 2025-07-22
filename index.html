@@ -258,6 +258,14 @@
             }
         });
     </script>
+    <script>
+// Se for popup de OAuth2, envie o token para a janela principal
+if (window.opener && window.location.hash.includes('access_token')) {
+  try {
+    window.opener.postMessage({ type: 'oauth_token', hash: window.location.hash }, window.location.origin);
+  } catch (e) {}
+}
+</script>
 </body>
 
 </html>
