@@ -337,7 +337,7 @@
                         <option value="Transferência de conta">Transferência de conta</option>
                     </select>
                 </td>
-                <td><input type="text" placeholder="Número do contrato" onchange="calcularValores()"></td>
+                <td><input type="date" onchange="calcularValores()"></td>
                 <td><input type="text" placeholder="RGI" onchange="calcularValores()"></td>
                 <td><input type="text" placeholder="Número do protocolo" onchange="calcularValores()"></td>
                 <td><input type="number" step="0.01" class="valor-field" placeholder="0,00" onchange="calcularValores()"></td>
@@ -522,7 +522,7 @@
         "Tel. Vendedor",
         "Endereço Imóvel",
         "Tipo de Serviço",
-        "Contrato",
+        "Previsão de Conclusão",
         "RGI",
         "Protocolo",
         "Valor Cobrado",
@@ -554,7 +554,7 @@
             inputs[4].value, // Tel Vendedor
             inputs[5].value, // Endereço
             inputs[6].value, // Serviço
-            inputs[7].value, // Contrato
+            inputs[7].value, // Previsão de Conclusão
             inputs[8].value, // RGI
             inputs[9].value, // Protocolo
             valorCobrado,
@@ -766,7 +766,7 @@
                                             }>Transferência de conta</option>
                                         </select>
                                     </td>
-                                    <td><input type="text" value="${
+                                    <td><input type="date" value="${
                                       row[7] || ""
                                     }" onchange="calcularValores()"></td>
                                     <td><input type="text" value="${
