@@ -34,11 +34,16 @@
   // Função para mostrar alertas de sucesso personalizados
   function mostrarAlertaSucesso(titulo, mensagem, detalhes = "") {
     const alertaCompleto = `🎉 ${titulo}\n\n${mensagem}${detalhes ? '\n\n' + detalhes : ''}\n\n✅ Operação realizada com êxito!`;
-    alert(alertaCompleto);
+    mostrarAlertaCentralizado(alertaCompleto);
   }
 
   // Função para mostrar status com alerta de sucesso
   function mostrarStatus(mensagem, tipo = "info") {
+    // Só mostrar alerta centralizado para erros de interação do usuário
+    if (tipo === "error") {
+      mostrarAlertaCentralizado(mensagem);
+      return;
+    }
     const statusDiv = document.getElementById("status");
     
     if (!statusDiv) {
@@ -54,7 +59,7 @@
     if (tipo === "success") {
       // Mostrar alerta nativo do navegador
       setTimeout(() => {
-        alert(`✅ Sucesso!\n\n${mensagem}\n\nOperação realizada com êxito!`);
+        mostrarAlertaCentralizado(`✅ Sucesso!\n\n${mensagem}\n\nOperação realizada com êxito!`);
       }, 1000);
     }
 
@@ -74,7 +79,7 @@
     GOOGLE_OAUTH_CONFIG.clientId = clientId;
     const state = Math.random().toString(36).substring(2, 15);
     sessionStorage.setItem('oauth_state', state);
-
+    
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', GOOGLE_OAUTH_CONFIG.redirectUri);
@@ -82,7 +87,7 @@
     authUrl.searchParams.set('response_type', 'token');
     authUrl.searchParams.set('state', state);
     authUrl.searchParams.set('prompt', 'consent');
-
+    
     // Abre o popup
     const popup = window.open(authUrl.toString(), 'GoogleLogin', 'width=500,height=600');
     // Listener para receber o token do popup
@@ -602,21 +607,21 @@
       if (dados.length > 1) {
         const appendResponse = await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A1:append?valueInputOption=RAW`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${accessToken}`
-            },
-            body: JSON.stringify({
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
+          },
+          body: JSON.stringify({
               values: dados.slice(1), // só os dados, sem o cabeçalho
-            }),
+          }),
           }
-        );
+      );
 
         if (appendResponse.ok) {
           mostrarStatus("Dados adicionados com sucesso ao Google Sheets!", "success");
-        } else {
+      } else {
           const error = await appendResponse.json();
           mostrarStatus(`Erro ao adicionar dados: ${error.error.message}`, "error");
         }

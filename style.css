@@ -887,7 +887,7 @@ select:focus {
   z-index: 2;
   transition: opacity 0.2s;
   background: f8f9fa;
-}
+  }
 
 .btn-remove {
   background-color: #e74c3c;
