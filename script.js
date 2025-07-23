@@ -606,18 +606,18 @@
       // Não envie o cabeçalho, só os dados das linhas
       if (dados.length > 1) {
         const appendResponse = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A1:append?valueInputOption=RAW`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`
-          },
-          body: JSON.stringify({
+          `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A5:append?valueInputOption=RAW`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
               values: dados.slice(1), // só os dados, sem o cabeçalho
-          }),
+            }),
           }
-      );
+        );
 
         if (appendResponse.ok) {
           mostrarStatus("Dados adicionados com sucesso ao Google Sheets!", "success");
@@ -626,7 +626,7 @@
           mostrarStatus(`Erro ao adicionar dados: ${error.error.message}`, "error");
         }
       } else {
-        mostrarStatus("Nenhum dado para enviar.", "info");
+        mostrarAlertaCentralizado("Nenhum dado para enviar.");
       }
     } catch (error) {
       mostrarStatus(
@@ -667,12 +667,12 @@
       if (response.ok) {
         const data = await response.json();
 
-        if (data.values && data.values.length > 1) {
+        if (data.values && data.values.length > 4) {
           // Limpar tabela atual
           document.getElementById("corpoTabela").innerHTML = "";
 
-          // Pular cabeçalho (primeira linha)
-          const rows = data.values.slice(1);
+          // Pular cabeçalho (primeiras 4 linhas)
+          const rows = data.values.slice(4);
 
           rows.forEach((row) => {
             if (row.length > 0 && row[0]) {
@@ -788,7 +788,9 @@
                                     }" onchange="calcularValores()"></td>
                                     <td class="valor-field" style="background-color: #e8f5e8;">R$ 0,00</td>
                                     <td class="valor-field" style="background-color: #f0f8ff;">R$ 0,00</td>
-                                    <td><input type="text" class="status-input" value="${row[14] || ''}" placeholder="Status"></td>
+                                    <td><input type="text" class="status-input" value="${
+                                      row[14] || ""
+                                    }" placeholder="Status"></td>
                                     <td class="acao"><button class="btn-remove" onclick="removerLinha(this)">Remover</button></td>
                                 `;
 
@@ -806,7 +808,11 @@
         }
       } else {
         const error = await response.json();
+        if (error.error && error.error.message && error.error.message.includes('Unable to parse range')) {
+          mostrarStatus("Planilha está vazia", "info");
+        } else {
         mostrarStatus(`Erro ao carregar dados: ${error.error.message}`, "error");
+        }
       }
     } catch (error) {
       mostrarStatus(
@@ -1168,6 +1174,15 @@
     });
   }
 
+  function limparTabelaServicos() {
+    const corpoTabela = document.getElementById("corpoTabela");
+    if (corpoTabela) {
+      corpoTabela.innerHTML = "";
+      adicionarLinha();
+      mostrarAlertaCentralizado("Tabela limpa! Pronto para nova inserção.");
+    }
+  }
+
   // Inicialização
   document.addEventListener("DOMContentLoaded", function () {
     // Carregar valores salvos antes de qualquer manipulação
@@ -1253,5 +1268,6 @@
   window.mostrarAlertaParceiro = mostrarAlertaParceiro;
   window.adicionarNovoServico = adicionarNovoServico;
   window.atualizarSelectsServicos = atualizarSelectsServicos;
+  window.limparTabelaServicos = limparTabelaServicos;
 })();
 
