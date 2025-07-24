@@ -243,11 +243,6 @@
     // Calcular percentual total atual
     const percentualTotal = parceiros.reduce((total, p) => total + p.percentual, 0) + percentual;
     
-    // if (percentualTotal > 35) {
-    //   mostrarStatus(`Percentual total excede 35%. Atual: ${percentualTotal.toFixed(2)}%`, "error");
-    //   return;
-    // }
-
     // Adicionar parceiro
     parceiros.push({ nome, percentual });
     
@@ -804,14 +799,18 @@
             "success",
           );
         } else {
-          mostrarStatus("Nenhum dado encontrado para este mês", "info");
+          mostrarAlertaCentralizado("A tabela está vazia. Nenhum registro encontrado para este mês.");
         }
       } else {
         const error = await response.json();
         if (error.error && error.error.message && error.error.message.includes('Unable to parse range')) {
           mostrarStatus("Planilha está vazia", "info");
         } else {
-        mostrarStatus(`Erro ao carregar dados: ${error.error.message}`, "error");
+          if (error.error && error.error.message && error.error.message.includes('Requested entity was not found')) {
+            mostrarAlertaCentralizado("A tabela está vazia. Nenhum registro encontrado para este mês.");
+          } else {
+            mostrarStatus(`Erro ao carregar dados: ${error.error.message}`, "error");
+          }
         }
       }
     } catch (error) {
@@ -1221,17 +1220,6 @@
     // Verificar token salvo
     verificarTokenSalvo();
 
-    // Salvar ao digitar ou mudar
-    // const clientIdInput = document.getElementById("clientId"); // Moved up
-    // const spreadsheetIdInput = document.getElementById("spreadsheetId"); // Moved up
-    // if (clientIdInput) { // Moved up
-    //   clientIdInput.addEventListener("input", salvarConfiguracoes); // Moved up
-    //   clientIdInput.addEventListener("change", salvarConfiguracoes); // Moved up
-    // }
-    // if (spreadsheetIdInput) { // Moved up
-    //   spreadsheetIdInput.addEventListener("input", salvarConfiguracoes); // Moved up
-    //   spreadsheetIdInput.addEventListener("change", salvarConfiguracoes); // Moved up
-    // }
     ativarListenersValoresServicos();
   });
 
