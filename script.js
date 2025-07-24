@@ -1317,6 +1317,7 @@
     if (corpoTabela) {
       corpoTabela.innerHTML = "";
       adicionarLinha();
+      calcularValores(); // Atualiza o resumo após limpar
       mostrarAlertaCentralizado("Tabela limpa! Pronto para nova inserção.");
     }
   }
