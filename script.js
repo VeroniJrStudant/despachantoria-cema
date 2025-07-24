@@ -243,6 +243,11 @@
     // Calcular percentual total atual
     const percentualTotal = parceiros.reduce((total, p) => total + p.percentual, 0) + percentual;
     
+    // if (percentualTotal > 35) {
+    //   mostrarStatus(`Percentual total excede 35%. Atual: ${percentualTotal.toFixed(2)}%`, "error");
+    //   return;
+    // }
+
     // Adicionar parceiro
     parceiros.push({ nome, percentual });
     
@@ -894,6 +899,138 @@
     }
   }
 
+  async function criarCopiaPlanilhaComLimpeza() {
+    const spreadsheetId = document.getElementById("spreadsheetId").value;
+    if (!spreadsheetId) {
+      mostrarAlertaCentralizado("Por favor, informe o ID da planilha modelo");
+      return;
+    }
+    // 1. Solicitar autorização temporária para o Drive
+    const clientId = document.getElementById("clientId").value.trim();
+    const state = Math.random().toString(36).substring(2, 15);
+    const redirectUri = window.location.origin + window.location.pathname;
+    const driveScope = 'https://www.googleapis.com/auth/drive';
+    const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    authUrl.searchParams.set('client_id', clientId);
+    authUrl.searchParams.set('redirect_uri', redirectUri);
+    authUrl.searchParams.set('scope', driveScope);
+    authUrl.searchParams.set('response_type', 'token');
+    authUrl.searchParams.set('state', state);
+    authUrl.searchParams.set('prompt', 'consent');
+    authUrl.searchParams.set('include_granted_scopes', 'false');
+
+    mostrarAlertaCentralizado("Solicitando permissão temporária para criar a planilha...");
+    // Abrir popup para autorização
+    const popup = window.open(authUrl.toString(), 'DriveAuth', 'width=500,height=600');
+    // Listener para receber o token do popup
+    return new Promise((resolve) => {
+      window.addEventListener('message', async function handleDriveOAuth(event) {
+        if (event.origin !== window.location.origin) return;
+        if (event.data && event.data.type === 'oauth_token_drive') {
+          window.removeEventListener('message', handleDriveOAuth);
+          if (popup) popup.close();
+          const tempAccessToken = event.data.token;
+          // Chamar a função de cópia usando o token temporário
+          await criarCopiaPlanilhaComLimpezaComToken(tempAccessToken, spreadsheetId);
+          resolve();
+        }
+      });
+    });
+  }
+
+  // Função auxiliar para criar a cópia usando o token temporário
+  async function criarCopiaPlanilhaComLimpezaComToken(tempAccessToken, spreadsheetId) {
+    try {
+      mostrarAlertaCentralizado("Criando cópia da planilha, aguarde...");
+      // 1. Copiar a planilha modelo
+      const copyResponse = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${spreadsheetId}/copy`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${tempAccessToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            name: "CEMA Imobiliária - Controle Financeiro"
+          })
+        }
+      );
+      const copyData = await copyResponse.json();
+      if (!copyData.id) {
+        mostrarAlertaCentralizado("Erro ao copiar planilha: " + (copyData.error && copyData.error.message ? copyData.error.message : ""));
+        return;
+      }
+      const newSpreadsheetId = copyData.id;
+      // 2. Buscar sheetIds das abas desejadas
+      const abasParaLimpar = [
+        "total no ano", "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+        "julho", "agosto", "setembro", "novembro", "dezembro"
+      ];
+      const sheetsResp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${newSpreadsheetId}`,
+        {
+          headers: { "Authorization": `Bearer ${tempAccessToken}` }
+        }
+      );
+      const sheetsData = await sheetsResp.json();
+      const sheetIdMap = {};
+      if (sheetsData.sheets) {
+        sheetsData.sheets.forEach(s => {
+          if (abasParaLimpar.includes(s.properties.title.toLowerCase())) {
+            sheetIdMap[s.properties.title.toLowerCase()] = s.properties.sheetId;
+          }
+        });
+      }
+      // 3. Limpar linhas 5+ das abas desejadas
+      const requests = [];
+      abasParaLimpar.forEach(nomeAba => {
+        const sheetId = sheetIdMap[nomeAba];
+        if (sheetId !== undefined) {
+          requests.push({
+            deleteDimension: {
+              range: {
+                sheetId: sheetId,
+                dimension: "ROWS",
+                startIndex: 4 // Linha 5 (zero-based)
+              }
+            }
+          });
+        }
+      });
+      if (requests.length > 0) {
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${newSpreadsheetId}:batchUpdate`,
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${tempAccessToken}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ requests })
+          }
+        );
+      }
+      mostrarAlertaCentralizado(
+        `Planilha criada com sucesso!<br><a href="https://docs.google.com/spreadsheets/d/${newSpreadsheetId}" target="_blank">Abrir nova planilha</a>`
+      );
+    } catch (error) {
+      mostrarAlertaCentralizado("Erro ao criar cópia: " + error.message);
+    }
+  }
+  // No popup, envie o token temporário de volta para a janela principal
+  if (window.opener && window.location.hash.includes('access_token')) {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const token = params.get('access_token');
+    // Detecta se é para o fluxo temporário do Drive
+    if (window.name === 'DriveAuth') {
+      window.opener.postMessage({ type: 'oauth_token_drive', token }, window.location.origin);
+    } else {
+      window.opener.postMessage({ type: 'oauth_token', hash: window.location.hash }, window.location.origin);
+    }
+  }
+
   // Função para salvar configurações no localStorage
   function salvarConfiguracoes() {
     const clientId = document.getElementById("clientId").value;
@@ -1039,6 +1176,8 @@
       if (response.ok) {
         const mensagemSucesso = `Relatório completo gerado com sucesso!\n\nPlanilha: ${spreadsheetId}\nAba: Relatório_Anual\nData: ${new Date().toLocaleDateString("pt-BR")}\n\nO relatório está disponível na planilha!`;
         mostrarStatus(mensagemSucesso, "success");
+        // Abrir a planilha em nova aba
+        window.open(`https://docs.google.com/spreadsheets/d/${spreadsheetId}`, '_blank');
       } else {
         throw new Error("Erro ao gerar relatório");
       }
@@ -1220,6 +1359,17 @@
     // Verificar token salvo
     verificarTokenSalvo();
 
+    // Salvar ao digitar ou mudar
+    // const clientIdInput = document.getElementById("clientId"); // Moved up
+    // const spreadsheetIdInput = document.getElementById("spreadsheetId"); // Moved up
+    // if (clientIdInput) { // Moved up
+    //   clientIdInput.addEventListener("input", salvarConfiguracoes); // Moved up
+    //   clientIdInput.addEventListener("change", salvarConfiguracoes); // Moved up
+    // }
+    // if (spreadsheetIdInput) { // Moved up
+    //   spreadsheetIdInput.addEventListener("input", salvarConfiguracoes); // Moved up
+    //   spreadsheetIdInput.addEventListener("change", salvarConfiguracoes); // Moved up
+    // }
     ativarListenersValoresServicos();
   });
 
@@ -1229,7 +1379,7 @@
     if (configSection) {
       configSection.innerHTML += `
             <div style="margin-top: 15px;">
-                <button class="btn btn-add" onclick="criarPlanilhaAutomatica()">🆕 Criar Nova Planilha</button>
+                <button class="btn btn-add" onclick="criarCopiaPlanilhaComLimpeza()">🆕 Criar Nova Planilha</button>
                 <button class="btn btn-sync" onclick="exportarRelatorioCompleto()">📊 Gerar Relatório Completo</button>
             </div>
         `;
@@ -1257,5 +1407,6 @@
   window.adicionarNovoServico = adicionarNovoServico;
   window.atualizarSelectsServicos = atualizarSelectsServicos;
   window.limparTabelaServicos = limparTabelaServicos;
+  window.criarCopiaPlanilhaComLimpeza = criarCopiaPlanilhaComLimpeza;
 })();
 
