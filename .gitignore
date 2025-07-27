@@ -1,0 +1,22 @@
+# Arquivos de configuração com credenciais
+config.env
+.env
+.env.local
+.env.production
+
+# Arquivos de configuração JavaScript (opcional - remover se quiser versionar)
+config.js
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dependências
+node_modules/
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Cache
+.cache/ 
