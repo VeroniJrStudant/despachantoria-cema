@@ -1,103 +1,325 @@
-# CEMA Imobiliária - Controle Financeiro de Serviços
+# 🏢 CEMA Imobiliária - Sistema de Controle Financeiro
 
-Este sistema web permite o controle financeiro do setor de serviços da CEMA Imobiliária, com integração ao Google Sheets, gestão de parceiros, validação de dados e experiência de usuário moderna.
+## 📋 Descrição
 
-## Funcionalidades
+Sistema web completo para controle financeiro de serviços da CEMA Imobiliária, com integração automática ao Google Sheets. Desenvolvido para gerenciar serviços imobiliários, calcular percentuais de parceiros e gerar relatórios consolidados.
 
-- Cadastro e controle de serviços realizados
-- Integração OAuth2 com Google Sheets (envio e leitura de dados)
-- Cadastro dinâmico de parceiros e percentuais
-- Cálculo automático de valores (CEMA, parceiros, despesas)
-- Exportação incremental para Google Sheets (não sobrescreve dados antigos)
-- Validação visual e centralizada de todos os campos obrigatórios
-- Sessão expira automaticamente após 30 minutos de uso
-- Interface responsiva, com labels flutuantes e campos modernos
-- Avisos e alertas centralizados na tela para melhor UX
-- Botão "olhinho" para mostrar/ocultar campos sensíveis
-- Tabela de serviços com edição inline, campo de status e botão de remoção
+## ✨ Funcionalidades Principais
 
-## Requisitos
+### 🔐 Autenticação e Segurança
+- **Login OAuth2 com Google**: Autenticação segura via Gmail
+- **Controle de Acesso**: Apenas e-mails autorizados têm acesso
+- **Persistência de Sessão**: Token salvo automaticamente
+- **Logout Seguro**: Limpeza completa de dados sensíveis
 
-- Navegador moderno (Chrome, Firefox, Edge, Safari)
-- Conta Google com permissão para criar projetos e usar Google Sheets API
-- Servidor local para rodar o HTML (ex: Python http.server, Live Server, etc)
+### 📊 Gestão de Serviços
+- **Tabela Dinâmica**: Adição/remoção de linhas de serviços
+- **Serviços Padrão**: 12 serviços pré-configurados (registros, laudêmios, etc.)
+- **Serviços Personalizados**: Adição de novos serviços com valores customizados
+- **Cálculos Automáticos**: Percentuais CEMA (65%) e Parceiros (35%)
 
-## Como usar
+### 🤝 Gestão de Parceiros
+- **Cadastro Dinâmico**: Adição/remoção de parceiros
+- **Validação de Percentuais**: Soma total deve ser 35%
+- **Distribuição Automática**: Cálculo proporcional por parceiro
+- **Persistência**: Dados salvos automaticamente
 
-### 1. Clonar o projeto
+### 📈 Resumo Financeiro
+- **Totais Automáticos**: Faturamento, despesas e líquido
+- **Divisão CEMA**: 65% do faturamento
+- **Divisão Parceiros**: 35% distribuído proporcionalmente
+- **Atualização em Tempo Real**: Cálculos automáticos
 
-```bash
-git clone <repo-url>
-cd <pasta-do-projeto>
+### 🔗 Integração Google Sheets
+- **Envio de Dados**: Exportação completa para planilha
+- **Carregamento**: Importação de dados existentes
+- **Criação Automática**: Nova planilha formatada
+- **Relatórios**: Geração de relatórios anuais consolidados
+
+## 🛠️ Tecnologias Utilizadas
+
+- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
+- **Autenticação**: Google OAuth2
+- **API**: Google Sheets API v4
+- **Armazenamento**: localStorage (dados locais)
+- **Design**: CSS Grid, Flexbox, Gradientes
+- **Responsividade**: Mobile-first design
+
+## 📁 Estrutura do Projeto
+
+```
+cema-imobiliaria/
+├── index.html              # Interface principal
+├── style.css               # Estilos e responsividade
+├── script.js               # Lógica JavaScript
+├── config.js               # Configurações OAuth2 (privado)
+├── config.example.js       # Exemplo de configuração
+├── config.env              # Variáveis de ambiente
+├── .gitignore              # Arquivos ignorados pelo Git
+├── README.md               # Documentação
+└── img/                    # Imagens e logos
+    └── Logo.png           # Logo da CEMA
 ```
 
-### 2. Rodar localmente
+## 🚀 Instalação e Configuração
 
-No terminal, execute:
+### 1. Pré-requisitos
+- Conta Google com acesso ao Google Sheets
+- Servidor web local (Live Server, XAMPP, etc.)
+- Navegador moderno (Chrome, Firefox, Safari, Edge)
 
-```bash
-python3 -m http.server 8000
-```
+### 2. Configuração OAuth2
 
-Acesse [http://localhost:8000](http://localhost:8000) no navegador.
-
-### 3. Configurar Google Sheets API
-
+#### Passo 1: Google Cloud Console
 1. Acesse [Google Cloud Console](https://console.cloud.google.com)
-2. Crie um projeto ou selecione um existente
-3. Ative a Google Sheets API
-4. Vá em "Credentials" → "Create Credentials" → "OAuth 2.0 Client IDs"
-5. Configure como "Web application"
-6. Adicione `http://localhost:8000` e `http://127.0.0.1:8000` como URIs autorizados
-7. Copie o Client ID e cole no campo correspondente na tela
-8. Crie uma planilha no Google Sheets e cole o ID dela no campo correspondente
+2. Crie um novo projeto ou selecione existente
+3. Ative as APIs:
+   - Google Sheets API
+   - Google Drive API
 
-### 4. Login e uso
+#### Passo 2: Credenciais OAuth2
+1. Vá em "APIs & Services" > "Credentials"
+2. Clique em "Create Credentials" > "OAuth 2.0 Client IDs"
+3. Configure:
+   - **Application type**: Web application
+   - **Name**: CEMA Imobiliária
+   - **Authorized JavaScript origins**: `http://localhost:5500` (ou seu servidor)
+   - **Authorized redirect URIs**: `http://localhost:5500/index.html`
 
-- Clique em **Fazer Login com Google** e autorize o acesso
-- O token expira automaticamente após 30 minutos (logout automático)
-- O Client ID permanece preenchido após login
+#### Passo 3: Configuração Local
+1. Copie `config.example.js` para `config.js`
+2. Substitua as credenciais:
+```javascript
+const CONFIG = {
+  GOOGLE_CLIENT_ID: 'SEU_CLIENT_ID_AQUI',
+  GOOGLE_REDIRECT_URI: 'http://localhost:5500/index.html',
+  GOOGLE_SCOPE: 'https://www.googleapis.com/auth/spreadsheets'
+};
+```
 
-### 5. Cadastro de parceiros
+#### Passo 4: Usuários Autorizados
+1. No Google Cloud Console, vá em "OAuth consent screen"
+2. Adicione e-mails de teste em "Test users"
+3. Ou publique a aplicação para acesso público
 
-- Adicione parceiros com nome e percentual (a soma deve ser 35%)
-- O sistema valida nome e percentual antes de permitir o envio
-- Não é possível enviar dados sem pelo menos um parceiro válido
+### 3. Execução
+1. Clone o repositório
+2. Configure o `config.js` com suas credenciais
+3. Inicie um servidor local (ex: Live Server)
+4. Acesse `http://localhost:5500`
 
-### 6. Cadastro de serviços
+## 📖 Como Usar
 
-- Preencha os campos da tabela de serviços
-- O campo **Status** pode ser usado para anotações rápidas (ex: "Pendente", "Concluído")
-- Remova linhas com o botão vermelho à direita
+### 1. Primeiro Acesso
+1. **Configure o Sistema**:
+   - Digite seu e-mail Gmail
+   - Cole o ID da planilha Google Sheets
+   - Clique em "Fazer Login com Gmail"
 
-### 7. Envio para Google Sheets
+2. **Autorize o Acesso**:
+   - Siga o fluxo OAuth2 do Google
+   - Autorize o acesso aos dados
 
-- Clique em **Enviar para Google Sheets**
-- Os dados são ACRESCENTADOS ao final da aba do mês selecionado (não sobrescreve)
-- O cabeçalho não é duplicado
-- Todos os campos obrigatórios são validados antes do envio
-- Avisos de erro aparecem centralizados na tela
+### 2. Gestão de Parceiros
+1. **Adicione Parceiros**:
+   - Nome do parceiro
+   - Percentual de participação
+   - Total deve somar 35%
 
-### 8. Experiência do usuário
+2. **Validação Automática**:
+   - Sistema valida percentuais
+   - Alertas para valores incorretos
 
-- Labels flutuantes nos campos (padrão Material/Bootstrap)
-- Inputs e selects com foco azul, feedback visual e validação
-- Botão "olhinho" para mostrar/ocultar campos sensíveis
-- Alertas de erro e sucesso centralizados na tela
-- Tabela de serviços com visual moderno, zebra, hover e responsividade
+### 3. Cadastro de Serviços
+1. **Serviços Padrão**:
+   - 12 serviços pré-configurados
+   - Valores editáveis
 
-## Personalização
+2. **Serviços Personalizados**:
+   - Adicione novos serviços
+   - Defina valores customizados
+   - Remova serviços desnecessários
 
-- Para alterar o tempo de expiração do login, edite o valor em `setTimeout` na função `processarCallbackOAuth2` (padrão: 30 minutos)
-- Para mudar o layout ou cores, edite o arquivo `style.css`
-- Para adicionar novos campos na tabela, edite o HTML e ajuste a função de exportação no JS
+### 4. Tabela de Serviços
+1. **Adicione Linhas**:
+   - Clique em "+ Adicionar Novo Serviço"
+   - Preencha todos os campos
 
-## Dicas
+2. **Cálculos Automáticos**:
+   - Valores CEMA (65%)
+   - Valores Parceiros (35%)
+   - Totais atualizados em tempo real
 
-- Sempre preencha todos os campos obrigatórios antes de enviar
-- Use o campo Status para controle interno (ex: "Aguardando pagamento", "Finalizado")
-- O sistema é responsivo e pode ser usado em tablets e celulares
+### 5. Integração Google Sheets
+1. **Enviar Dados**:
+   - Clique em "📤 Enviar para Google Sheets"
+   - Dados são exportados para aba do mês
 
-## Suporte
+2. **Carregar Dados**:
+   - Clique em "📥 Carregar do Google Sheets"
+   - Dados são importados da planilha
 
-Em caso de dúvidas ou problemas, entre em contato com o desenvolvedor responsável pelo sistema. 
+3. **Criar Planilha**:
+   - Clique em "🆕 Criar Planilha Automática"
+   - Nova planilha formatada é criada
+
+4. **Gerar Relatório**:
+   - Clique em "📊 Gerar Relatório"
+   - Relatório anual consolidado
+
+## 🔧 Configurações Avançadas
+
+### Personalização de Serviços
+```javascript
+// Adicionar novo serviço
+const servicosValores = {
+  "Meu Serviço": 500.00,
+  // ... outros serviços
+};
+```
+
+### Modificação de Percentuais
+```javascript
+// Alterar divisão CEMA/Parceiros
+const percentualCEMA = 0.65; // 65%
+const percentualParceiros = 0.35; // 35%
+```
+
+### Estilização CSS
+```css
+/* Personalizar cores */
+:root {
+  --primary-color: #B71419;
+  --secondary-color: #3498db;
+  --success-color: #27ae60;
+}
+```
+
+## 🚨 Troubleshooting
+
+### Erro "invalid_client"
+- Verifique se o Client ID está correto no `config.js`
+- Confirme se as URIs autorizadas estão configuradas
+
+### Erro "redirect_uri_mismatch"
+- Verifique se a URI de redirecionamento está correta
+- Confirme se o domínio está autorizado
+
+### Serviços não aparecem
+- Verifique se a API Google Sheets está ativada
+- Confirme se o token de acesso é válido
+
+### Dados não salvam
+- Verifique se o localStorage está habilitado
+- Confirme se não há bloqueadores de cookies
+
+## 📊 Estrutura de Dados
+
+### Serviços Padrão
+- Registro com financiamento: R$ 800,00
+- Registro à vista: R$ 500,00
+- Averbação: R$ 300,00
+- Guia de Laudêmio do SPU: R$ 100,00
+- Laudêmio da prefeitura: R$ 700,00
+- Laudêmio das famílias: R$ 700,00
+- Laudêmio do São Bento: R$ 700,00
+- Laudêmio da Igreja da Glória: R$ 700,00
+- Laudêmio da Mitra: R$ 700,00
+- Emissão de guia de ITBI: R$ 100,00
+- Emissão de certidão por nome: R$ 100,00
+- Transferência de conta: R$ 100,00
+
+### Divisão Financeira
+- **CEMA**: 65% do faturamento
+- **Parceiros**: 35% do faturamento
+- **Despesas**: Deduzidas do percentual CEMA
+
+## 🔒 Segurança
+
+### Dados Sensíveis
+- Credenciais OAuth2 em arquivo separado
+- Token de acesso em sessionStorage
+- Dados locais em localStorage
+
+### Controle de Acesso
+- Autenticação obrigatória
+- Lista de e-mails autorizados
+- Logout automático por inatividade
+
+### Proteção de Dados
+- Validação de entrada
+- Sanitização de dados
+- Criptografia de tokens
+
+## 📱 Responsividade
+
+### Breakpoints
+- **Desktop**: > 1200px
+- **Tablet**: 768px - 1199px
+- **Mobile**: < 767px
+
+### Funcionalidades Mobile
+- Interface adaptativa
+- Botões otimizados para touch
+- Scroll horizontal em tabelas
+
+## 🚀 Deploy
+
+### GitHub Pages
+1. Faça push para o repositório
+2. Configure GitHub Pages
+3. Atualize URIs autorizadas no Google Cloud Console
+
+### Servidor Web
+1. Faça upload dos arquivos
+2. Configure HTTPS (obrigatório para OAuth2)
+3. Atualize URIs autorizadas
+
+### Vercel/Netlify
+1. Conecte o repositório
+2. Configure variáveis de ambiente
+3. Deploy automático
+
+## 🤝 Contribuição
+
+### Como Contribuir
+1. Fork o projeto
+2. Crie uma branch para sua feature
+3. Commit suas mudanças
+4. Push para a branch
+5. Abra um Pull Request
+
+### Padrões de Código
+- JavaScript ES6+
+- CSS com BEM methodology
+- HTML semântico
+- Comentários em português
+
+## 📄 Licença
+
+Este projeto é desenvolvido para uso exclusivo da CEMA Imobiliária.
+
+## 👥 Desenvolvimento
+
+### Desenvolvedor
+- **Nome**: [Seu Nome]
+- **Especialidade**: Frontend Development
+- **Contato**: [seu-email@exemplo.com]
+
+### Cliente
+- **Empresa**: CEMA Imobiliária
+- **Setor**: Imobiliário
+- **Localização**: [Cidade/Estado]
+
+## 📞 Suporte
+
+Para suporte técnico ou dúvidas:
+- **Email**: [suporte@exemplo.com]
+- **Telefone**: [número]
+- **Horário**: Segunda a Sexta, 8h às 18h
+
+---
+
+**Versão**: 1.0.0  
+**Última Atualização**: Janeiro 2025  
+**Status**: ✅ Produção 
