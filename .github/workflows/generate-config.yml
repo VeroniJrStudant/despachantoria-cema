@@ -1,0 +1,30 @@
+name: Gerar config.js automaticamente
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v3
+
+      - name: Gerar config.js
+        run: |
+          echo "// Arquivo gerado automaticamente pelo GitHub Actions" > config.js
+          echo "window.CONFIG = {" >> config.js
+          echo "  GOOGLE_CLIENT_ID: '${{ secrets.GOOGLE_CLIENT_ID }}'," >> config.js
+          echo "  GOOGLE_REDIRECT_URI: '${{ secrets.GOOGLE_REDIRECT_URI }}'," >> config.js
+          echo "  GOOGLE_SCOPE: '${{ secrets.GOOGLE_SCOPE }}'" >> config.js
+          echo "};" >> config.js
+
+      - name: Commit e push do config.js
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add config.js
+          git commit -m "Atualiza config.js via GitHub Actions" || echo "Nada para commitar"
+          git push
