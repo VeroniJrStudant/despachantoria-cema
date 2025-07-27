@@ -1,5 +1,4 @@
-# Create the GitHub Actions workflow file content
-workflow_content = """name: Deploy site to GitHub Pages
+name: Deploy site to GitHub Pages
 
 on:
   push:
@@ -37,14 +36,3 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
           publish_branch: gh-pages
-"""
-
-# Save the workflow file
-workflow_path = ".github/workflows/deploy-gh-pages.yml"
-import os
-os.makedirs(os.path.dirname(workflow_path), exist_ok=True)
-with open(workflow_path, "w") as f:
-    f.write(workflow_content)
-
-print(f"Workflow criado com sucesso em: {workflow_path}")
-
