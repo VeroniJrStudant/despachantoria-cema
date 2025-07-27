@@ -4,9 +4,6 @@ config.env
 .env.local
 .env.production
 
-# Arquivos de configuração JavaScript (opcional - remover se quiser versionar)
-config.js
-
 # Logs
 *.log
 npm-debug.log*
