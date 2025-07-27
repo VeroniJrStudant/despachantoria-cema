@@ -176,11 +176,7 @@
         }
         
         salvarConfiguracoes();
-      } else {
-        // Erro ao obter perfil, mas token está válido - usar e-mail do sessionStorage
-        console.log('Erro ao obter perfil do usuário:', response.status);
-        console.log('Usando e-mail do sessionStorage como fallback');
-        
+      } else {        
         const userEmail = sessionStorage.getItem('user_email');
         if (userEmail) {
           userProfile = { email: userEmail, name: 'Usuário' };
@@ -303,70 +299,57 @@
       accessToken = savedToken;
       obterPerfilUsuario();
     } else {
-      console.log('Nenhum token encontrado no sessionStorage');
     }
   }
 
   // Funções para gerenciar parceiros
   function mostrarAlertaParceiro(msg) {
-    console.log('mostrarAlertaParceiro chamada com:', msg);
     mostrarAlertaCentralizado(msg);
   }
 
   // Atualizar função adicionarParceiro para mostrar alerta se inválido
   function adicionarParceiro() {
-    console.log('adicionarParceiro chamada');
     const btnAdd = document.getElementById("btnAddPartner");
-    console.log('Botão desabilitado:', btnAdd.disabled);
     
     const nome = document.getElementById("partnerName").value.trim();
     const percentual = parseFloat(document.getElementById("partnerPercentage").value);
     
-    console.log('Nome:', nome);
-    console.log('Percentual:', percentual);
 
     // Verificar se apenas um dos campos está preenchido
     if (nome && (isNaN(percentual) || percentual === "")) {
-      console.log('Campo nome preenchido, percentual vazio');
       mostrarAlertaParceiro("Por favor, preencha também o percentual do parceiro");
       return;
     }
 
     if (!nome && !isNaN(percentual) && percentual > 0) {
-      console.log('Campo percentual preenchido, nome vazio');
       mostrarAlertaParceiro("Por favor, preencha também o nome do parceiro");
       return;
     }
 
     // Verificar se ambos os campos estão vazios
     if (!nome && (isNaN(percentual) || percentual === "")) {
-      console.log('Ambos os campos vazios');
       mostrarAlertaParceiro("Por favor, preencha o nome e o percentual do parceiro");
       return;
     }
 
     // Verificar se o nome está vazio (caso específico)
     if (!nome) {
-      console.log('Nome vazio');
       mostrarAlertaParceiro("Por favor, insira o nome do parceiro");
       return;
     }
 
     // Verificar se o percentual é inválido
     if (isNaN(percentual) || percentual <= 0 || percentual > 100) {
-      console.log('Percentual inválido');
       mostrarAlertaParceiro("Por favor, insira um percentual válido (0-100)");
       return;
     }
 
     // Verificar se o nome já existe
     if (parceiros.some(p => p.nome.toLowerCase() === nome.toLowerCase())) {
-      console.log('Nome duplicado');
       mostrarAlertaParceiro("Já existe um parceiro com este nome");
       return;
     }
 
-    console.log('Parceiro válido, adicionando...');
     // Calcular percentual total atual
     const percentualTotal = parceiros.reduce((total, p) => total + p.percentual, 0) + percentual;
 
@@ -432,7 +415,6 @@
     const tbody = document.getElementById("corpoTabela");
     
     if (!tbody) {
-      console.log("Elemento corpoTabela não encontrado, pulando adição de linha");
       return;
     }
     
@@ -489,7 +471,6 @@
     let totalDespesas = 0;
 
     if (linhas.length === 0) {
-      console.log("Nenhuma linha encontrada na tabela, pulando cálculo");
       return;
     }
 
@@ -498,7 +479,6 @@
       const inputDespesas = linha.querySelectorAll('input[type="number"]')[1];
       
       if (!inputValor || !inputDespesas) {
-        console.log("Inputs de valor não encontrados na linha, pulando");
         return;
       }
       
@@ -1382,7 +1362,6 @@
 
   // Função para mostrar alerta centralizado na tela
   function mostrarAlertaCentralizado(msg) {
-    console.log('mostrarAlertaCentralizado chamada com:', msg);
     let alerta = document.getElementById('centeredAlert');
     if (!alerta) {
       alerta = document.createElement('div');
@@ -1530,7 +1509,6 @@
   document.addEventListener("DOMContentLoaded", function () {
     // Verificar se há um callback OAuth2 na URL
     if (window.location.hash && window.location.hash.includes('access_token')) {
-      console.log('Hash OAuth2 detectado, processando...');
       processarCallbackOAuth2();
     }
     
