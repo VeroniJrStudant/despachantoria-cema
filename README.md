@@ -1,325 +1,257 @@
-# 🏢 CEMA Imobiliária - Sistema de Controle Financeiro
+# CEMA Imobiliária - Sistema de Controle Financeiro
 
-## 📋 Descrição
+Sistema web completo para controle financeiro do setor de serviços da CEMA Imobiliária, com integração ao Google Sheets, controle de acesso baseado em email, gestão de parceiros e experiência de usuário moderna.
 
-Sistema web completo para controle financeiro de serviços da CEMA Imobiliária, com integração automática ao Google Sheets. Desenvolvido para gerenciar serviços imobiliários, calcular percentuais de parceiros e gerar relatórios consolidados.
+## 📋 Índice
 
-## ✨ Funcionalidades Principais
+- [Funcionalidades](#funcionalidades)
+- [Sistema de Controle de Acesso](#sistema-de-controle-de-acesso)
+- [Configuração e Instalação](#configuração-e-instalação)
+- [Como Usar](#como-usar)
+- [Cenários de Uso](#cenários-de-uso)
+- [Troubleshooting](#troubleshooting)
+- [Personalização](#personalização)
 
-### 🔐 Autenticação e Segurança
-- **Login OAuth2 com Google**: Autenticação segura via Gmail
-- **Controle de Acesso**: Apenas e-mails autorizados têm acesso
-- **Persistência de Sessão**: Token salvo automaticamente
-- **Logout Seguro**: Limpeza completa de dados sensíveis
+## 🚀 Funcionalidades
 
-### 📊 Gestão de Serviços
-- **Tabela Dinâmica**: Adição/remoção de linhas de serviços
-- **Serviços Padrão**: 12 serviços pré-configurados (registros, laudêmios, etc.)
-- **Serviços Personalizados**: Adição de novos serviços com valores customizados
-- **Cálculos Automáticos**: Percentuais CEMA (65%) e Parceiros (35%)
+### Funcionalidades Gerais
+- ✅ Cadastro e controle de serviços realizados
+- ✅ Integração OAuth2 com Google Sheets (envio e leitura de dados)
+- ✅ Cadastro dinâmico de parceiros e percentuais
+- ✅ Cálculo automático de valores (CEMA, parceiros, despesas)
+- ✅ Exportação incremental para Google Sheets (não sobrescreve dados antigos)
+- ✅ Criação automática de cópias de planilhas com limpeza seletiva
+- ✅ Validação visual e centralizada de todos os campos obrigatórios
+- ✅ Sessão expira automaticamente após 30 minutos de uso
+- ✅ Interface responsiva, com labels flutuantes e campos modernos
+- ✅ Avisos e alertas centralizados na tela para melhor UX
+- ✅ Botão "olhinho" para mostrar/ocultar campos sensíveis
+- ✅ Tabela de serviços com edição inline, campo de status e botão de remoção
 
-### 🤝 Gestão de Parceiros
-- **Cadastro Dinâmico**: Adição/remoção de parceiros
-- **Validação de Percentuais**: Soma total deve ser 35%
-- **Distribuição Automática**: Cálculo proporcional por parceiro
-- **Persistência**: Dados salvos automaticamente
+### Funcionalidades de Controle de Acesso
+- 🔐 Controle de acesso baseado em email
+- 🔐 Diferentes Client IDs do Google OAuth2 para usuários autorizados/não autorizados
+- 🔐 Restrições de funcionalidades para usuários não autorizados
+- 🔐 Integração automática com GitHub Actions
+- 🔐 Proteção via GitHub Secrets
 
-### 📈 Resumo Financeiro
-- **Totais Automáticos**: Faturamento, despesas e líquido
-- **Divisão CEMA**: 65% do faturamento
-- **Divisão Parceiros**: 35% distribuído proporcionalmente
-- **Atualização em Tempo Real**: Cálculos automáticos
+## 🔐 Sistema de Controle de Acesso
 
-### 🔗 Integração Google Sheets
-- **Envio de Dados**: Exportação completa para planilha
-- **Carregamento**: Importação de dados existentes
-- **Criação Automática**: Nova planilha formatada
-- **Relatórios**: Geração de relatórios anuais consolidados
+### Emails Autorizados
+Os seguintes emails têm acesso completo ao sistema:
+- `adm@cemaimobiliaria.com.br`
+- `laiza@cemaimobiliaria.com.br`
+- `veroni@cemaimobiliaria.com.br`
 
-## 🛠️ Tecnologias Utilizadas
+### Funcionalidades Restritas
+Para usuários com emails não autorizados, as seguintes funcionalidades são desabilitadas:
 
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Autenticação**: Google OAuth2
-- **API**: Google Sheets API v4
-- **Armazenamento**: localStorage (dados locais)
-- **Design**: CSS Grid, Flexbox, Gradientes
-- **Responsividade**: Mobile-first design
+#### Botões Desabilitados:
+- 🆕 **Criar Planilha Automática** - Desabilitado
+- 📊 **Gerar Relatório** - Desabilitado
+- ➕ **Adicionar Serviço** - Desabilitado
+- 🗑️ **Remover Serviço** - Desabilitado
+- 🔗 **Google Cloud Console** - Link desabilitado
 
-## 📁 Estrutura do Projeto
+#### Comportamento Visual:
+- Botões aparecem com opacidade reduzida (50%)
+- Cursor muda para "not-allowed"
+- Tooltip mostra "Acesso restrito - Apenas emails autorizados"
+- Seção "Para Desenvolvedores" fica oculta
 
+### Sistema de Client IDs
+O sistema utiliza diferentes Client IDs do Google OAuth2 baseado na autorização do email:
+
+#### Client IDs Configurados:
+- **Usuários Autorizados**: `CONFIG.GOOGLE_CLIENT_ID` (configurado via GitHub Secrets)
+- **Usuários Não Autorizados**: `CONFIG.GOOGLE_CLIENT_ID_NAO_AUTORIZADO` (configurado via GitHub Secrets)
+
+#### Como Funciona:
+1. **Email Autorizado** → Usa Client ID principal (`GOOGLE_CLIENT_ID`)
+2. **Email Não Autorizado** → Usa Client ID secundário (`GOOGLE_CLIENT_ID_NAO_AUTORIZADO`)
+3. **Seleção Automática** → O sistema escolhe o Client ID correto baseado no email digitado
+4. **GitHub Actions** → Gera o `config.js` automaticamente com ambos os Client IDs
+
+## ⚙️ Configuração e Instalação
+
+### Requisitos
+- Navegador moderno (Chrome, Firefox, Edge, Safari)
+- Conta Google com permissão para criar projetos e usar Google Sheets API
+- Servidor local para rodar o HTML (ex: Python http.server, Live Server, etc)
+
+### 1. Clonar o Projeto
+```bash
+git clone <repo-url>
+cd <pasta-do-projeto>
 ```
-cema-imobiliaria/
-├── index.html              # Interface principal
-├── style.css               # Estilos e responsividade
-├── script.js               # Lógica JavaScript
-├── config.js               # Configurações OAuth2 (privado)
-├── config.example.js       # Exemplo de configuração
-├── config.env              # Variáveis de ambiente
-├── .gitignore              # Arquivos ignorados pelo Git
-├── README.md               # Documentação
-└── img/                    # Imagens e logos
-    └── Logo.png           # Logo da CEMA
+
+### 2. Rodar Localmente
+No terminal, execute:
+```bash
+python3 -m http.server 8000
 ```
+Acesse [http://localhost:8000](http://localhost:8000) no navegador.
 
-## 🚀 Instalação e Configuração
+### 3. Configurar Google Cloud Console
 
-### 1. Pré-requisitos
-- Conta Google com acesso ao Google Sheets
-- Servidor web local (Live Server, XAMPP, etc.)
-- Navegador moderno (Chrome, Firefox, Safari, Edge)
-
-### 2. Configuração OAuth2
-
-#### Passo 1: Google Cloud Console
+#### Para Desenvolvimento Local:
 1. Acesse [Google Cloud Console](https://console.cloud.google.com)
-2. Crie um novo projeto ou selecione existente
+2. Crie um projeto ou selecione um existente
 3. Ative as APIs:
-   - Google Sheets API
-   - Google Drive API
+   - **Google Sheets API**
+   - **Google Drive API**
+4. Vá em "Credentials" → "Create Credentials" → "OAuth 2.0 Client IDs"
+5. Configure como "Web application"
+6. Adicione `http://localhost:8000` e `http://127.0.0.1:8000` como URIs autorizados
+7. Copie o Client ID e cole no campo correspondente na tela
+8. Crie uma planilha no Google Sheets e cole o ID dela no campo correspondente
 
-#### Passo 2: Credenciais OAuth2
-1. Vá em "APIs & Services" > "Credentials"
-2. Clique em "Create Credentials" > "OAuth 2.0 Client IDs"
-3. Configure:
-   - **Application type**: Web application
-   - **Name**: CEMA Imobiliária
-   - **Authorized JavaScript origins**: `http://localhost:5500` (ou seu servidor)
-   - **Authorized redirect URIs**: `http://localhost:5500/index.html`
+#### Para Produção (GitHub Actions):
+Configure no GitHub Secrets:
+- `GOOGLE_CLIENT_ID`: Client ID para usuários autorizados
+- `GOOGLE_CLIENT_ID_NAO_AUTORIZADO`: Client ID para usuários não autorizados
+- `GOOGLE_SCOPE`: `https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive`
 
-#### Passo 3: Configuração Local
-1. Copie `config.example.js` para `config.js`
-2. Substitua as credenciais:
-```javascript
-const CONFIG = {
-  GOOGLE_CLIENT_ID: 'SEU_CLIENT_ID_AQUI',
-  GOOGLE_REDIRECT_URI: 'http://localhost:5500/index.html',
-  GOOGLE_SCOPE: 'https://www.googleapis.com/auth/spreadsheets'
-};
+### 4. Configuração do GitHub Actions
+O arquivo `.github/workflows/deploy-gh-pages.yml` gera automaticamente o `config.js`:
+
+```yaml
+- name: Gerar config.js com secrets
+  run: |
+    cat > public/config.js << 'EOF'
+    window.CONFIG = {
+      GOOGLE_CLIENT_ID: '${{ secrets.GOOGLE_CLIENT_ID }}',
+      GOOGLE_CLIENT_ID_NAO_AUTORIZADO: '${{ secrets.GOOGLE_CLIENT_ID_NAO_AUTORIZADO }}',
+      GOOGLE_REDIRECT_URI: 'https://despachante.cemaimobiliaria.com.br/',
+      GOOGLE_SCOPE: '${{ secrets.GOOGLE_SCOPE }}'
+    };
+    EOF
 ```
-
-#### Passo 4: Usuários Autorizados
-1. No Google Cloud Console, vá em "OAuth consent screen"
-2. Adicione e-mails de teste em "Test users"
-3. Ou publique a aplicação para acesso público
-
-### 3. Execução
-1. Clone o repositório
-2. Configure o `config.js` com suas credenciais
-3. Inicie um servidor local (ex: Live Server)
-4. Acesse `http://localhost:5500`
 
 ## 📖 Como Usar
 
-### 1. Primeiro Acesso
-1. **Configure o Sistema**:
-   - Digite seu e-mail Gmail
-   - Cole o ID da planilha Google Sheets
-   - Clique em "Fazer Login com Gmail"
+### 1. Login e Autenticação
+- Digite seu email no campo "Email Gmail"
+- Clique em **Fazer Login com Google** e autorize o acesso
+- O sistema automaticamente seleciona o Client ID apropriado baseado no seu email
+- O token expira automaticamente após 30 minutos (logout automático)
 
-2. **Autorize o Acesso**:
-   - Siga o fluxo OAuth2 do Google
-   - Autorize o acesso aos dados
-
-### 2. Gestão de Parceiros
-1. **Adicione Parceiros**:
-   - Nome do parceiro
-   - Percentual de participação
-   - Total deve somar 35%
-
-2. **Validação Automática**:
-   - Sistema valida percentuais
-   - Alertas para valores incorretos
+### 2. Cadastro de Parceiros
+- Adicione parceiros com nome e percentual (a soma deve ser 35%)
+- O sistema valida nome e percentual antes de permitir o envio
+- Não é possível enviar dados sem pelo menos um parceiro válido
 
 ### 3. Cadastro de Serviços
-1. **Serviços Padrão**:
-   - 12 serviços pré-configurados
-   - Valores editáveis
+- Preencha os campos da tabela de serviços
+- O campo **Status** pode ser usado para anotações rápidas (ex: "Pendente", "Concluído")
+- Remova linhas com o botão vermelho à direita
 
-2. **Serviços Personalizados**:
-   - Adicione novos serviços
-   - Defina valores customizados
-   - Remova serviços desnecessários
+### 4. Envio para Google Sheets
+- Clique em **Enviar para Google Sheets**
+- Os dados são ACRESCENTADOS ao final da aba do mês selecionado (não sobrescreve)
+- O cabeçalho não é duplicado
+- Todos os campos obrigatórios são validados antes do envio
 
-### 4. Tabela de Serviços
-1. **Adicione Linhas**:
-   - Clique em "+ Adicionar Novo Serviço"
-   - Preencha todos os campos
+### 5. Criação de Planilhas Automáticas
+- Clique em **Criar Planilha Automática**
+- O sistema copia EXATAMENTE a planilha modelo com todas as fórmulas e formatação
+- Limpa automaticamente as linhas a partir da linha 5 nas abas de janeiro a dezembro
+- Mantém cabeçalhos, fórmulas, cores e estrutura das primeiras 4 linhas
 
-2. **Cálculos Automáticos**:
-   - Valores CEMA (65%)
-   - Valores Parceiros (35%)
-   - Totais atualizados em tempo real
+## 🎯 Cenários de Uso
 
-### 5. Integração Google Sheets
-1. **Enviar Dados**:
-   - Clique em "📤 Enviar para Google Sheets"
-   - Dados são exportados para aba do mês
+### Cenário 1: Usuário Autorizado (Email da CEMA)
+**Email**: `adm@cemaimobiliaria.com.br`
 
-2. **Carregar Dados**:
-   - Clique em "📥 Carregar do Google Sheets"
-   - Dados são importados da planilha
+**Comportamento**:
+- ✅ Todos os botões estão habilitados
+- ✅ Usa Client ID principal (`CONFIG.GOOGLE_CLIENT_ID`)
+- ✅ Acesso completo a todas as funcionalidades
+- ✅ Mensagem: "Usando Client ID para usuários autorizados"
 
-3. **Criar Planilha**:
-   - Clique em "🆕 Criar Planilha Automática"
-   - Nova planilha formatada é criada
+### Cenário 2: Usuário Não Autorizado (Outro Email)
+**Email**: `teste@gmail.com`
 
-4. **Gerar Relatório**:
-   - Clique em "📊 Gerar Relatório"
-   - Relatório anual consolidado
+**Comportamento**:
+- ❌ Botões restritos ficam desabilitados (opacidade 50%)
+- ❌ Usa Client ID secundário (`CONFIG.GOOGLE_CLIENT_ID_NAO_AUTORIZADO`)
+- ❌ Acesso limitado (apenas visualização)
+- ❌ Link do Google Cloud Console fica desabilitado
+- ❌ Seção "Para Desenvolvedores" fica oculta
 
-## 🔧 Configurações Avançadas
+## 🔧 Troubleshooting
 
-### Personalização de Serviços
+### Problema: Client ID não está sendo aplicado
+**Solução**: Verifique se o `config.js` está sendo carregado corretamente e se ambos os secrets estão configurados
+
+### Problema: Botões não ficam desabilitados
+**Solução**: Verifique se o email está na lista `EMAILS_AUTORIZADOS` no arquivo `script.js`
+
+### Problema: GitHub Actions não gera config.js
+**Solução**: Verifique se os secrets `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_ID_NAO_AUTORIZADO` estão configurados corretamente no GitHub
+
+### Problema: Erro "Google Drive API has not been used"
+**Solução**: Ative a Google Drive API no Google Cloud Console do seu projeto
+
+### Problema: Erro de autenticação OAuth2
+**Solução**: Verifique se os URIs autorizados estão configurados corretamente no Google Cloud Console
+
+## 🎨 Personalização
+
+### Adicionar Novos Emails Autorizados
+Edite a constante `EMAILS_AUTORIZADOS` no arquivo `script.js`:
+
 ```javascript
-// Adicionar novo serviço
-const servicosValores = {
-  "Meu Serviço": 500.00,
-  // ... outros serviços
-};
+const EMAILS_AUTORIZADOS = [
+  'adm@cemaimobiliaria.com.br',
+  'laiza@cemaimobiliaria.com.br',
+  'veroni@cemaimobiliaria.com.br',
+  'novo@email.com' // Adicione aqui
+];
 ```
 
-### Modificação de Percentuais
-```javascript
-// Alterar divisão CEMA/Parceiros
-const percentualCEMA = 0.65; // 65%
-const percentualParceiros = 0.35; // 35%
-```
+### Alterar Tempo de Expiração
+Para alterar o tempo de expiração do login, edite o valor em `setTimeout` na função `processarCallbackOAuth2` (padrão: 30 minutos)
 
-### Estilização CSS
-```css
-/* Personalizar cores */
-:root {
-  --primary-color: #B71419;
-  --secondary-color: #3498db;
-  --success-color: #27ae60;
-}
-```
+### Personalizar Layout
+- Para mudar o layout ou cores, edite o arquivo `style.css`
+- Para adicionar novos campos na tabela, edite o HTML e ajuste a função de exportação no JS
 
-## 🚨 Troubleshooting
+## 📝 Mensagens do Sistema
 
-### Erro "invalid_client"
-- Verifique se o Client ID está correto no `config.js`
-- Confirme se as URIs autorizadas estão configuradas
+### Durante o Login:
+- **Autorizado**: "Usando Client ID para usuários autorizados. Email: [email]"
+- **Não Autorizado**: "Usando Client ID para usuários não autorizados. Email: [email]"
 
-### Erro "redirect_uri_mismatch"
-- Verifique se a URI de redirecionamento está correta
-- Confirme se o domínio está autorizado
+### Após Login Bem-sucedido:
+- **Autorizado**: "Login realizado com sucesso usando Client ID para usuários autorizado"
+- **Não Autorizado**: "Login realizado com sucesso usando Client ID para usuários não autorizado"
 
-### Serviços não aparecem
-- Verifique se a API Google Sheets está ativada
-- Confirme se o token de acesso é válido
-
-### Dados não salvam
-- Verifique se o localStorage está habilitado
-- Confirme se não há bloqueadores de cookies
-
-## 📊 Estrutura de Dados
-
-### Serviços Padrão
-- Registro com financiamento: R$ 800,00
-- Registro à vista: R$ 500,00
-- Averbação: R$ 300,00
-- Guia de Laudêmio do SPU: R$ 100,00
-- Laudêmio da prefeitura: R$ 700,00
-- Laudêmio das famílias: R$ 700,00
-- Laudêmio do São Bento: R$ 700,00
-- Laudêmio da Igreja da Glória: R$ 700,00
-- Laudêmio da Mitra: R$ 700,00
-- Emissão de guia de ITBI: R$ 100,00
-- Emissão de certidão por nome: R$ 100,00
-- Transferência de conta: R$ 100,00
-
-### Divisão Financeira
-- **CEMA**: 65% do faturamento
-- **Parceiros**: 35% do faturamento
-- **Despesas**: Deduzidas do percentual CEMA
+### Acesso Limitado:
+- **Não Autorizado**: "Acesso limitado para [email]. Usando Client ID: [client-id-secundario]"
 
 ## 🔒 Segurança
 
-### Dados Sensíveis
-- Credenciais OAuth2 em arquivo separado
-- Token de acesso em sessionStorage
-- Dados locais em localStorage
+- O controle é aplicado tanto no frontend quanto no backend das funções
+- Verificações duplas garantem que usuários não autorizados não possam executar ações restritas
+- Mensagens de erro informativas explicam as restrições
+- O sistema mantém a funcionalidade de visualização para todos os usuários
+- Diferentes Client IDs garantem isolamento entre usuários autorizados e não autorizados
+- Ambos os Client IDs são protegidos via GitHub Secrets
 
-### Controle de Acesso
-- Autenticação obrigatória
-- Lista de e-mails autorizados
-- Logout automático por inatividade
+## 📱 Experiência do Usuário
 
-### Proteção de Dados
-- Validação de entrada
-- Sanitização de dados
-- Criptografia de tokens
+- Labels flutuantes nos campos (padrão Material/Bootstrap)
+- Inputs e selects com foco azul, feedback visual e validação
+- Botão "olhinho" para mostrar/ocultar campos sensíveis
+- Alertas de erro e sucesso centralizados na tela
+- Tabela de serviços com visual moderno, zebra, hover e responsividade
+- Sistema responsivo que funciona em tablets e celulares
 
-## 📱 Responsividade
+## 🆘 Suporte
 
-### Breakpoints
-- **Desktop**: > 1200px
-- **Tablet**: 768px - 1199px
-- **Mobile**: < 767px
-
-### Funcionalidades Mobile
-- Interface adaptativa
-- Botões otimizados para touch
-- Scroll horizontal em tabelas
-
-## 🚀 Deploy
-
-### GitHub Pages
-1. Faça push para o repositório
-2. Configure GitHub Pages
-3. Atualize URIs autorizadas no Google Cloud Console
-
-### Servidor Web
-1. Faça upload dos arquivos
-2. Configure HTTPS (obrigatório para OAuth2)
-3. Atualize URIs autorizadas
-
-### Vercel/Netlify
-1. Conecte o repositório
-2. Configure variáveis de ambiente
-3. Deploy automático
-
-## 🤝 Contribuição
-
-### Como Contribuir
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
-5. Abra um Pull Request
-
-### Padrões de Código
-- JavaScript ES6+
-- CSS com BEM methodology
-- HTML semântico
-- Comentários em português
-
-## 📄 Licença
-
-Este projeto é desenvolvido para uso exclusivo da CEMA Imobiliária.
-
-## 👥 Desenvolvimento
-
-### Desenvolvedor
-- **Nome**: [Seu Nome]
-- **Especialidade**: Frontend Development
-- **Contato**: [seu-email@exemplo.com]
-
-### Cliente
-- **Empresa**: CEMA Imobiliária
-- **Setor**: Imobiliário
-- **Localização**: [Cidade/Estado]
-
-## 📞 Suporte
-
-Para suporte técnico ou dúvidas:
-- **Email**: [suporte@exemplo.com]
-- **Telefone**: [número]
-- **Horário**: Segunda a Sexta, 8h às 18h
+Em caso de dúvidas ou problemas, entre em contato com o desenvolvedor responsável pelo sistema.
 
 ---
 
-**Versão**: 1.0.0  
-**Última Atualização**: Janeiro 2025  
-**Status**: ✅ Produção 
+**Desenvolvido para CEMA Imobiliária** 🏢

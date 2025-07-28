@@ -1,14 +1,96 @@
-// Boas práticas: Encapsulamento, comentários e organização modular
-// Este script manipula a tabela de serviços, integra com Google Sheets e atualiza o resumo financeiro.
 (function() {
-  // Array para armazenar os parceiros
   let parceiros = [];
   
-  // Configurações OAuth2
   let accessToken = null;
   let userProfile = null;
   
-  // Configuração do Google OAuth2
+  const EMAILS_AUTORIZADOS = [
+    'adm@cemaimobiliaria.com.br',
+    'laiza@cemaimobiliaria.com.br',
+    'veroni@cemaimobiliaria.com.br'
+  ];
+  
+  function verificarEmailAutorizado(email) {
+    if (!email) return false;
+    return EMAILS_AUTORIZADOS.includes(email.toLowerCase());
+  }
+  
+  function obterClientIdPorEmail(email) {
+    const isAutorizado = verificarEmailAutorizado(email);
+    
+    if (isAutorizado) {
+      return CONFIG.GOOGLE_CLIENT_ID;
+    } else {
+      return CONFIG.GOOGLE_CLIENT_ID_NAO_AUTORIZADO;
+    }
+  }
+  
+  function controlarAcessoPorEmail(email) {
+    const isAutorizado = verificarEmailAutorizado(email);
+    
+    const botoesParaDesabilitar = [
+      'criarCopiaPlanilhaComLimpeza',
+      'exportarRelatorioCompleto',
+      'adicionarNovoServico',
+      'removerServicoAdicionado'  
+    ];
+    
+    botoesParaDesabilitar.forEach(selector => {
+      const botoes = document.querySelectorAll(`[onclick*="${selector}"]`);
+      botoes.forEach(botao => {
+        if (!isAutorizado) {
+          botao.disabled = true;
+          botao.style.opacity = '0.5';
+          botao.style.cursor = 'not-allowed';
+          botao.title = 'Acesso restrito - Apenas emails autorizados';
+        } else {
+          botao.disabled = false;
+          botao.style.opacity = '1';
+          botao.style.cursor = 'pointer';
+          botao.title = '';
+        }
+      });
+    });
+    
+    const googleCloudLinks = document.querySelectorAll('a[href*="console.cloud.google.com"]');
+    googleCloudLinks.forEach(link => {
+      if (!isAutorizado) {
+        link.classList.add('disabled');
+        link.title = 'Acesso restrito - Apenas emails autorizados';
+        link.removeAttribute('href');
+        link.removeAttribute('target');
+      } else {
+        link.classList.remove('disabled');
+        link.title = '';
+        link.href = 'https://console.cloud.google.com';
+        link.target = '_blank';
+      }
+    });
+    
+    const devSection = document.querySelector('.dev-section');
+    if (devSection) {
+      if (!isAutorizado) {
+        devSection.style.display = 'none';
+      } else {
+        devSection.style.display = 'block';
+      }
+    }
+    
+    if (!isAutorizado && email) {
+      const clientId = obterClientIdPorEmail(email);
+      mostrarStatus(`Acesso limitado para ${email}. Usando Client ID: ${clientId}`, "info");
+    }
+  }
+
+  if (typeof CONFIG === 'undefined') {
+    console.error('CONFIG não está definido. Verifique se config.js foi carregado corretamente.');
+    window.CONFIG = {
+      GOOGLE_CLIENT_ID: '',
+      GOOGLE_REDIRECT_URI: 'https://despachante.cemaimobiliaria.com.br/',
+      GOOGLE_SCOPE: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive'
+    };
+  }
+
   const GOOGLE_OAUTH_CONFIG = {
     clientId: CONFIG.GOOGLE_CLIENT_ID,
     scope: CONFIG.GOOGLE_SCOPE,
@@ -30,23 +112,18 @@
     "Transferência de conta": 100.0,
   };
 
-  // Função para mostrar alertas de sucesso personalizados
   function mostrarAlertaSucesso(titulo, mensagem, detalhes = "") {
     const alertaCompleto = `🎉 ${titulo}\n\n${mensagem}${detalhes ? '\n\n' + detalhes : ''}\n\n✅ Operação realizada com êxito!`;
     mostrarAlertaCentralizado(alertaCompleto);
   }
 
-  // Função para mostrar status com alerta de sucesso
   function mostrarStatus(mensagem, tipo = "info") {
-    // Só mostrar alerta centralizado para erros de interação do usuário
     if (tipo === "error") {
       mostrarAlertaCentralizado(mensagem);
       return;
     }
 
-    // Adicionar alerta de sucesso para operações importantes
     if (tipo === "success") {
-      // Mostrar alerta nativo do navegador
       setTimeout(() => {
         mostrarAlertaCentralizado(`✅ Sucesso!\n\n${mensagem}`);
       }, 1000);
@@ -54,12 +131,11 @@
 
   }
 
-  // Funções OAuth2
   function iniciarLoginGmail() {
-    const userEmail = document.getElementById("userEmail").value.trim();
+    const userEmailLogin = document.getElementById("userEmail").value.trim();
     const spreadsheetId = document.getElementById("spreadsheetId").value.trim();
     
-    if (!userEmail) {
+    if (!userEmailLogin) {
       mostrarStatus("Por favor, insira seu e-mail Gmail", "error");
       return;
     }
@@ -69,27 +145,35 @@
       return;
     }
     
-    // Validar formato do e-mail
-    const emailRegex = /^[^\s@]+@gmail\.com$/;
-    if (!emailRegex.test(userEmail)) {
-      mostrarStatus("Por favor, insira um e-mail Gmail válido", "error");
+    const emailRegex = /^[^\s@]+@(gmail\.com|googlemail\.com|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/;
+    if (!emailRegex.test(userEmailLogin)) {
+      mostrarStatus("Por favor, insira um e-mail válido (Gmail ou Google Workspace)", "error");
       return;
+    }
+    
+    const clientId = obterClientIdPorEmail(userEmailLogin);
+    const isAutorizado = verificarEmailAutorizado(userEmailLogin);
+    
+    if (!isAutorizado) {
+      mostrarStatus(`Usando Client ID para usuários não autorizados. Email: ${userEmailLogin}`, "info");
+    } else {
+      mostrarStatus(`Usando Client ID para usuários autorizados. Email: ${userEmailLogin}`, "info");
     }
     
     const state = Math.random().toString(36).substring(2, 15);
     sessionStorage.setItem('oauth_state', state);
-    sessionStorage.setItem('user_email', userEmail);
+    sessionStorage.setItem('user_email', userEmailLogin);
+    sessionStorage.setItem('client_id_used', clientId);
     
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-    authUrl.searchParams.set('client_id', GOOGLE_OAUTH_CONFIG.clientId);
+    authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', GOOGLE_OAUTH_CONFIG.redirectUri);
     authUrl.searchParams.set('scope', GOOGLE_OAUTH_CONFIG.scope);
     authUrl.searchParams.set('response_type', 'token');
     authUrl.searchParams.set('state', state);
     authUrl.searchParams.set('prompt', 'consent');
-    authUrl.searchParams.set('login_hint', userEmail);
+    authUrl.searchParams.set('login_hint', userEmailLogin);
     
-    // Redirecionar na mesma janela (mais confiável que popup)
     window.location.href = authUrl.toString();
   }
 
@@ -106,11 +190,17 @@
     if (errorParam) {
       let errorMessage = `Erro na autenticação: ${errorParam}`;
       
-      // Mensagens específicas para erros comuns
       if (errorParam === 'access_denied') {
-        errorMessage = `Acesso negado. Verifique se:\n\n1. O e-mail está correto\n2. A credencial OAuth2 permite este e-mail\n3. Você autorizou o acesso na janela do Google`;
+        errorMessage = `Acesso negado. Verifique se:\n\n1. O e-mail está correto\n2. A credencial OAuth2 permite este e-mail (Gmail ou Google Workspace)\n3. Você autorizou o acesso na janela do Google`;
       } else if (errorParam === 'invalid_client') {
-        errorMessage = `Erro de configuração OAuth2!\n\nO Client ID não está configurado corretamente.\n\nPara resolver:\n1. Acesse https://console.cloud.google.com\n2. Crie um projeto e ative a Google Sheets API\n3. Crie credenciais OAuth2 (Web application)\n4. Substitua o Client ID no arquivo script.js\n5. Adicione os URIs autorizados: ${window.location.origin}`;
+        const userEmail = sessionStorage.getItem('user_email');
+        const isAutorizado = verificarEmailAutorizado(userEmail);
+        
+        if (isAutorizado) {
+          errorMessage = `Erro de configuração OAuth2!\n\nO Client ID não está configurado corretamente.\n\nPara resolver:\n1. Acesse https://console.cloud.google.com\n2. Crie um projeto e ative a Google Sheets API\n3. Crie credenciais OAuth2 (Web application)\n4. Substitua o Client ID no arquivo script.js\n5. Adicione os URIs autorizados: ${window.location.origin}`;
+        } else {
+          errorMessage = `Erro de configuração OAuth2!\n\nO Client ID não está configurado corretamente.\n\nEntre em contato com o administrador do sistema para resolver este problema.`;
+        }
       } else if (errorParam === 'unauthorized_client') {
         errorMessage = `Cliente não autorizado. O e-mail não tem permissão para usar esta aplicação.`;
       }
@@ -129,15 +219,19 @@
       sessionStorage.setItem('oauth_access_token', accessToken);
       sessionStorage.removeItem('oauth_state');
       
-      // Limpar hash da URL
       window.history.replaceState({}, document.title, window.location.pathname);
       
-      // Obter informações do usuário
       obterPerfilUsuario();
       
-      const userEmail = sessionStorage.getItem('user_email');
-      // Remover mensagem de sucesso do login
-      // Iniciar temporizador de expiração do token (30 minutos)
+      const userEmailCallback = sessionStorage.getItem('user_email');
+      const clientIdUsed = sessionStorage.getItem('client_id_used');
+      
+      if (clientIdUsed) {
+        const isAutorizado = verificarEmailAutorizado(userEmailCallback);
+        const tipoUsuario = isAutorizado ? 'autorizado' : 'não autorizado';
+        mostrarStatus(`Login realizado com sucesso usando Client ID para usuários ${tipoUsuario}`, "success");
+      }
+      
       if (window._oauthExpireTimeout) clearTimeout(window._oauthExpireTimeout);
       window._oauthExpireTimeout = setTimeout(() => {
         fazerLogout();
@@ -157,8 +251,7 @@
       if (response.ok) {
         userProfile = await response.json();
         
-        // Verificar se o e-mail logado corresponde ao e-mail inserido
-        const userEmailInput = document.getElementById("userEmail");
+        const userEmailInputVerificar = document.getElementById("userEmail");
         const expectedEmail = sessionStorage.getItem('user_email');
         
         if (userProfile.email && expectedEmail && userProfile.email.toLowerCase() !== expectedEmail.toLowerCase()) {
@@ -169,33 +262,31 @@
         
         atualizarInterfaceUsuario();
         
-        // Atualizar display do e-mail
-        const userEmailDisplay = document.getElementById("userEmailDisplay");
-        if (userEmailDisplay) {
-          userEmailDisplay.textContent = userProfile.email || "";
-        }
+          const userEmailDisplay0 = document.getElementById("userEmailDisplay");
+          if (userEmailDisplay0) {
+            userEmailDisplay0.textContent = userProfile.email || "";
+          }
+        
+        controlarAcessoPorEmail(userProfile.email);
         
         salvarConfiguracoes();
       } else {        
-        const userEmail = sessionStorage.getItem('user_email');
-        if (userEmail) {
-          userProfile = { email: userEmail, name: 'Usuário' };
+        const userEmailFallback = sessionStorage.getItem('user_email');
+        if (userEmailFallback) {
+          userProfile = { email: userEmailFallback, name: 'Usuário' };
           
-          // Salvar e-mail no localStorage para persistir
-          localStorage.setItem("cema_user_email", userEmail);
+          localStorage.setItem("cema_user_email", userEmailFallback);
           
-          // Atualizar campo de e-mail na interface
           const emailInput = document.getElementById("userEmail");
           if (emailInput) {
-            emailInput.value = userEmail;
+            emailInput.value = userEmailFallback;
           }
           
           atualizarInterfaceUsuario();
           
-          // Atualizar display do e-mail
-          const userEmailDisplay = document.getElementById("userEmailDisplay");
-          if (userEmailDisplay) {
-            userEmailDisplay.textContent = userEmail;
+          const userEmailDisplay1 = document.getElementById("userEmailDisplay");
+          if (userEmailDisplay1) {
+            userEmailDisplay1.textContent = userEmailFallback;
           }
           
           salvarConfiguracoes();
@@ -205,27 +296,23 @@
       }
     } catch (error) {
       console.error('Erro ao obter perfil do usuário:', error);
-      // Erro de conexão - usar e-mail do sessionStorage como fallback
-      const userEmail = sessionStorage.getItem('user_email');
-      if (userEmail) {
-        userProfile = { email: userEmail, name: 'Usuário' };
+      const userEmailError = sessionStorage.getItem('user_email');
+      if (userEmailError) {
+        userProfile = { email: userEmailError, name: 'Usuário' };
         
-        // Salvar e-mail no localStorage para persistir
-        localStorage.setItem("cema_user_email", userEmail);
+        localStorage.setItem("cema_user_email", userEmailError);
         
-        // Atualizar campo de e-mail na interface
         const emailInput = document.getElementById("userEmail");
         if (emailInput) {
-          emailInput.value = userEmail;
+          emailInput.value = userEmailError;
         }
         
         atualizarInterfaceUsuario();
         
-        // Atualizar display do e-mail
-        const userEmailDisplay = document.getElementById("userEmailDisplay");
-        if (userEmailDisplay) {
-          userEmailDisplay.textContent = userEmail;
-        }
+          const userEmailDisplay2 = document.getElementById("userEmailDisplay");
+          if (userEmailDisplay2) {
+            userEmailDisplay2.textContent = userEmailError;
+          }
         
         salvarConfiguracoes();
       } else {
@@ -239,7 +326,7 @@
     const logoutButton = document.getElementById("logoutButton");
     const userInfo = document.getElementById("userInfo");
     const userName = document.getElementById("userName");
-    const userEmail = document.getElementById("userEmail");
+    const userEmailElement = document.getElementById("userEmail");
     
     if (accessToken && userProfile) {
       loginButton.style.display = "none";
@@ -247,33 +334,42 @@
       if (userInfo) userInfo.style.display = "block";
       
       if (userName) userName.textContent = userProfile.name || "Usuário";
-      if (userEmail) userEmail.textContent = userProfile.email || "";
+      if (userEmailElement) userEmailElement.textContent = userProfile.email || "";
       
-      // Manter o campo de e-mail como password quando logado
       const emailInput = document.getElementById("userEmail");
       if (emailInput) {
         emailInput.disabled = true;
         emailInput.style.backgroundColor = "#f8f9fa";
-        // Garantir que o tipo seja password
         if (emailInput.type !== 'password') {
           emailInput.type = 'password';
         }
       }
+      
+      controlarAcessoPorEmail(userProfile.email);
     } else {
       loginButton.style.display = "inline-block";
       if (logoutButton) logoutButton.style.display = "none";
       if (userInfo) userInfo.style.display = "none";
       
-      // Habilitar o campo de e-mail quando não logado
+      const googleCloudLinks = document.querySelectorAll('a[href*="console.cloud.google.com"]');
+      googleCloudLinks.forEach(link => {
+        link.classList.add('disabled');
+        link.title = 'Faça login para acessar';
+        link.removeAttribute('href');
+        link.removeAttribute('target');
+      });
+      
       const emailInput = document.getElementById("userEmail");
       if (emailInput) {
         emailInput.disabled = false;
         emailInput.style.backgroundColor = "white";
-        // Garantir que o tipo seja password
         if (emailInput.type !== 'password') {
           emailInput.type = 'password';
         }
       }
+      
+      const emailDigitado = emailInput ? emailInput.value : '';
+      controlarAcessoPorEmail(emailDigitado);
     }
   }
 
@@ -282,8 +378,8 @@
     userProfile = null;
     sessionStorage.removeItem('oauth_access_token');
     sessionStorage.removeItem('user_email');
+    sessionStorage.removeItem('client_id_used');
     
-    // NÃO limpar o campo de e-mail - manter o e-mail digitado pelo usuário
     const emailInput = document.getElementById("userEmail");
     if (emailInput) {
       emailInput.disabled = false;
@@ -291,6 +387,9 @@
     }
     
     atualizarInterfaceUsuario();
+    
+    const emailDigitado = emailInput ? emailInput.value : '';
+    controlarAcessoPorEmail(emailDigitado);
   }
 
   function verificarTokenSalvo() {
@@ -299,15 +398,17 @@
       accessToken = savedToken;
       obterPerfilUsuario();
     } else {
+      const emailInput = document.getElementById("userEmail");
+      if (emailInput && emailInput.value) {
+        controlarAcessoPorEmail(emailInput.value);
+      }
     }
   }
 
-  // Funções para gerenciar parceiros
   function mostrarAlertaParceiro(msg) {
     mostrarAlertaCentralizado(msg);
   }
 
-  // Atualizar função adicionarParceiro para mostrar alerta se inválido
   function adicionarParceiro() {
     const btnAdd = document.getElementById("btnAddPartner");
     
@@ -315,7 +416,6 @@
     const percentual = parseFloat(document.getElementById("partnerPercentage").value);
     
 
-    // Verificar se apenas um dos campos está preenchido
     if (nome && (isNaN(percentual) || percentual === "")) {
       mostrarAlertaParceiro("Por favor, preencha também o percentual do parceiro");
       return;
@@ -326,46 +426,37 @@
       return;
     }
 
-    // Verificar se ambos os campos estão vazios
     if (!nome && (isNaN(percentual) || percentual === "")) {
       mostrarAlertaParceiro("Por favor, preencha o nome e o percentual do parceiro");
       return;
     }
 
-    // Verificar se o nome está vazio (caso específico)
     if (!nome) {
       mostrarAlertaParceiro("Por favor, insira o nome do parceiro");
       return;
     }
 
-    // Verificar se o percentual é inválido
     if (isNaN(percentual) || percentual <= 0 || percentual > 100) {
       mostrarAlertaParceiro("Por favor, insira um percentual válido (0-100)");
       return;
     }
 
-    // Verificar se o nome já existe
     if (parceiros.some(p => p.nome.toLowerCase() === nome.toLowerCase())) {
       mostrarAlertaParceiro("Já existe um parceiro com este nome");
       return;
     }
 
-    // Calcular percentual total atual
     const percentualTotal = parceiros.reduce((total, p) => total + p.percentual, 0) + percentual;
 
-    // Adicionar parceiro
     parceiros.push({ nome, percentual });
     
-    // Limpar campos
     document.getElementById("partnerName").value = "";
     document.getElementById("partnerPercentage").value = "";
     
-    // Atualizar interface
     atualizarInterfaceParceiros();
     calcularValores();
     salvarParceiros();
     
-    // Remover mensagem de sucesso da adição de parceiro
   }
 
   function removerParceiro(nome) {
@@ -445,7 +536,6 @@
 
     tbody.appendChild(novaLinha);
     
-    // Atualizar os selects para incluir todos os serviços (padrão + personalizados)
     atualizarSelectsServicos();
   }
 
@@ -488,11 +578,9 @@
       totalFaturado += valorCobrado;
       totalDespesas += despesas;
 
-      // Cálculo dos percentuais
       const valorCema = valorCobrado * 0.65 - despesas;
       const valorParceiros = valorCobrado * 0.35 + despesas;
 
-      // Atualizar as células de valores calculados
       const valorFields = linha.querySelectorAll(".valor-field");
       if (valorFields.length >= 4) {
         valorFields[2].textContent = `R$ ${valorCema.toFixed(2)}`;
@@ -500,7 +588,6 @@
       }
     });
 
-    // Atualizar resumo apenas se os elementos existirem
     const totalLiquido = totalFaturado - totalDespesas;
     const cemaBruto = totalFaturado * 0.65;
     const cemaLiquido = cemaBruto - totalDespesas;
@@ -521,7 +608,6 @@
     if (cemaDespesasElement) cemaDespesasElement.textContent = `R$ ${totalDespesas.toFixed(2)}`;
     if (cemaLiquidoElement) cemaLiquidoElement.textContent = `R$ ${cemaLiquido.toFixed(2)}`;
 
-    // Atualizar resumo dos parceiros
     atualizarResumoParceiros(totalFaturado, totalDespesas);
   }
 
@@ -545,7 +631,6 @@
       return;
     }
 
-    // Calcular valores por parceiro
     const valorBaseParceiros = totalFaturado * 0.35;
     const despesasPorParceiro = totalDespesas / parceiros.length;
 
@@ -562,7 +647,6 @@
       partnersSummary.appendChild(partnerItem);
     });
 
-    // Adicionar total dos parceiros
     const totalParceiros = valorBaseParceiros + totalDespesas;
     const totalItem = document.createElement("div");
     totalItem.className = "partner-summary-item";
@@ -577,7 +661,6 @@
   }
 
   async function enviarParaGoogleSheets() {
-    // Verificar se o token foi carregado corretamente
     if (!accessToken) {
       const savedToken = sessionStorage.getItem('oauth_access_token');
       if (savedToken) {
@@ -587,7 +670,7 @@
     
     const spreadsheetId = document.getElementById("spreadsheetId").value;
     const mesAno = document.getElementById("mes").selectedOptions[0].text;
-    const userEmail = document.getElementById("userEmail").value.trim();
+    const userEmailEnvio = document.getElementById("userEmail").value.trim();
     
     if (!accessToken) {
       mostrarAlertaCentralizado("Por favor, faça login com Gmail primeiro");
@@ -597,7 +680,7 @@
       mostrarStatus("Por favor, configure o ID da planilha", "error");
       return;
     }
-    if (!userEmail) {
+    if (!userEmailEnvio) {
       mostrarAlertaCentralizado("Por favor, preencha o e-mail Gmail antes de enviar.");
       return;
     }
@@ -605,7 +688,6 @@
       mostrarAlertaCentralizado("Por favor, adicione pelo menos um parceiro antes de enviar.");
       return;
     }
-    // Validação dos campos de parceiros
     for (const parceiro of parceiros) {
       if (!parceiro.nome || parceiro.nome.trim() === "" || parceiro.percentual === undefined || parceiro.percentual === null || parceiro.percentual === "" || isNaN(parceiro.percentual) || parceiro.percentual <= 0) {
         mostrarAlertaCentralizado("Preencha corretamente o nome e o percentual de todos os parceiros antes de enviar.");
@@ -615,10 +697,8 @@
     mostrarStatus("Enviando dados para Google Sheets...", "info");
 
     try {
-      // Preparar os dados
       const dados = [];
 
-      // Cabeçalho
       dados.push([
         "Data",
         "Cliente Comprador",
@@ -638,7 +718,6 @@
         "Parceiros Configurados"
       ]);
 
-      // Dados das linhas
       const linhas = document.querySelectorAll("#corpoTabela tr");
       linhas.forEach((linha) => {
         const inputs = linha.querySelectorAll("input, select");
@@ -672,10 +751,8 @@
         }
       });
 
-      // Criar ou atualizar a aba
       const sheetName = mesAno.replace(" ", "_");
 
-      // Primeiro, tentar criar a aba
       try {
         await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
@@ -699,11 +776,8 @@
           },
         );
       } catch (error) {
-        // Aba já existe, continuar
       }
 
-      // Enviar dados para a aba usando append (NÃO sobrescrever)
-      // Não envie o cabeçalho, só os dados das linhas
       if (dados.length > 1) {
         const appendResponse = await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A5:append?valueInputOption=RAW`,
@@ -714,7 +788,7 @@
               "Authorization": `Bearer ${accessToken}`
             },
             body: JSON.stringify({
-              values: dados.slice(1), // só os dados, sem o cabeçalho
+              values: dados.slice(1),
             }),
           }
         );
@@ -737,7 +811,6 @@
   }
 
   async function carregarDadosGoogleSheets() {
-    // Verificar se o token foi carregado corretamente
     if (!accessToken) {
       const savedToken = sessionStorage.getItem('oauth_access_token');
       if (savedToken) {
@@ -776,15 +849,12 @@
         const data = await response.json();
 
         if (data.values && data.values.length > 4) {
-          // Limpar tabela atual
           document.getElementById("corpoTabela").innerHTML = "";
 
-          // Pular cabeçalho (primeiras 4 linhas)
           const rows = data.values.slice(4);
 
           rows.forEach((row) => {
             if (row.length > 0 && row[0]) {
-              // Se tem data
               const tbody = document.getElementById("corpoTabela");
               const novaLinha = document.createElement("tr");
 
@@ -934,8 +1004,14 @@
     }
   }
 
-  // Função para criar a planilha automaticamente
   async function criarPlanilhaAutomatica() {
+    const emailInput = document.getElementById("userEmail");
+    const userEmailCriar = emailInput ? emailInput.value : '';
+    if (!verificarEmailAutorizado(userEmailCriar)) {
+      mostrarAlertaCentralizado('Acesso restrito. Apenas emails autorizados podem criar planilhas.');
+      return;
+    }
+    
     if (!accessToken) {
       mostrarStatus("Por favor, faça login com Gmail primeiro", "error");
       return;
@@ -972,7 +1048,6 @@
         document.getElementById("spreadsheetId").value = data.spreadsheetId;
         salvarConfiguracoes();
 
-        // Criar cabeçalho na aba de configuração
         const configData = [
           ["CEMA IMOBILIÁRIA - CONTROLE FINANCEIRO"],
           [""],
@@ -1008,155 +1083,132 @@
   }
 
   async function criarCopiaPlanilhaComLimpeza() {
+    const emailInput = document.getElementById("userEmail");
+    const userEmailCopia = emailInput ? emailInput.value : '';
+    if (!verificarEmailAutorizado(userEmailCopia)) {
+      mostrarAlertaCentralizado('Acesso restrito. Apenas emails autorizados podem criar cópias de planilhas.');
+      return;
+    }
+    
     const spreadsheetId = document.getElementById("spreadsheetId").value;
     if (!spreadsheetId) {
       mostrarAlertaCentralizado("Por favor, informe o ID da planilha modelo");
       return;
     }
-    // 1. Solicitar autorização temporária para o Drive
-    const userEmail = document.getElementById("userEmail").value.trim();
-    const state = Math.random().toString(36).substring(2, 15);
-    const redirectUri = window.location.origin + window.location.pathname;
-    const driveScope = 'https://www.googleapis.com/auth/drive';
-    const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-    authUrl.searchParams.set('client_id', GOOGLE_OAUTH_CONFIG.clientId);
-    authUrl.searchParams.set('redirect_uri', redirectUri);
-    authUrl.searchParams.set('scope', driveScope);
-    authUrl.searchParams.set('response_type', 'token');
-    authUrl.searchParams.set('state', state);
-    authUrl.searchParams.set('prompt', 'consent');
-    authUrl.searchParams.set('include_granted_scopes', 'false');
 
-    mostrarAlertaCentralizado("Solicitando permissão temporária para criar a planilha...");
-    // Abrir popup para autorização
-    const popup = window.open(authUrl.toString(), 'DriveAuth', 'width=500,height=600');
-    // Listener para receber o token do popup
-    return new Promise((resolve) => {
-      window.addEventListener('message', async function handleDriveOAuth(event) {
-        if (event.origin !== window.location.origin) return;
-        if (event.data && event.data.type === 'oauth_token_drive') {
-          window.removeEventListener('message', handleDriveOAuth);
-          if (popup) popup.close();
-          const tempAccessToken = event.data.token;
-          // Chamar a função de cópia usando o token temporário
-          await criarCopiaPlanilhaComLimpezaComToken(tempAccessToken, spreadsheetId);
-          resolve();
-        }
-      });
-    });
-  }
+    if (!accessToken) {
+      mostrarStatus("Por favor, faça login com Gmail primeiro", "error");
+      return;
+    }
 
-  // Função auxiliar para criar a cópia usando o token temporário
-  async function criarCopiaPlanilhaComLimpezaComToken(tempAccessToken, spreadsheetId) {
+    mostrarAlertaCentralizado("Criando cópia exata da planilha usando Google Drive API...");
+    
     try {
-      mostrarAlertaCentralizado("Criando cópia da planilha, aguarde...");
-      // 1. Copiar a planilha modelo
       const copyResponse = await fetch(
         `https://www.googleapis.com/drive/v3/files/${spreadsheetId}/copy`,
         {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${tempAccessToken}`,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
           },
           body: JSON.stringify({
-            name: "CEMA Imobiliária - Controle Financeiro"
+            name: "CEMA Imobiliária - Controle Financeiro",
+            parents: []
           })
         }
       );
-      const copyData = await copyResponse.json();
-      if (!copyData.id) {
-        mostrarAlertaCentralizado("Erro ao copiar planilha: " + (copyData.error && copyData.error.message ? copyData.error.message : ""));
+
+      if (!copyResponse.ok) {
+        const error = await copyResponse.json();
+        mostrarAlertaCentralizado("Erro ao copiar planilha: " + (error.error && error.error.message ? error.error.message : ""));
         return;
       }
-      const newSpreadsheetId = copyData.id;
-      // 2. Buscar sheetIds das abas desejadas
-      const abasParaLimpar = [
-        "total no ano", "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-        "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
-      ];
-      const sheetsResp = await fetch(
+
+      const copiedFile = await copyResponse.json();
+      const newSpreadsheetId = copiedFile.id;
+
+      const clearRequests = [];
+      const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 
+                     'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+      
+      const spreadsheetResponse = await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${newSpreadsheetId}`,
         {
-          headers: { "Authorization": `Bearer ${tempAccessToken}` }
+          headers: { "Authorization": `Bearer ${accessToken}` }
         }
       );
-      const sheetsData = await sheetsResp.json();
-      const sheetIdMap = {};
-      if (sheetsData.sheets) {
-        sheetsData.sheets.forEach(s => {
-          if (abasParaLimpar.includes(s.properties.title.toLowerCase())) {
-            sheetIdMap[s.properties.title.toLowerCase()] = s.properties.sheetId;
+      
+      if (spreadsheetResponse.ok) {
+        const spreadsheetData = await spreadsheetResponse.json();
+        
+        spreadsheetData.sheets.forEach(sheet => {
+          const sheetTitle = sheet.properties.title.toLowerCase();
+          if (meses.includes(sheetTitle)) {
+            clearRequests.push({
+              updateCells: {
+                range: {
+                  sheetId: sheet.properties.sheetId,
+                  startRowIndex: 4,
+                  endRowIndex: 1000,
+                  startColumnIndex: 0,
+                  endColumnIndex: 26 
+                },
+                fields: "userEnteredValue"
+              }
+            });
           }
         });
       }
-      // 3. Limpar linhas 5+ das abas desejadas
-      const requests = [];
-      abasParaLimpar.forEach(nomeAba => {
-        const sheetId = sheetIdMap[nomeAba];
-        if (sheetId !== undefined) {
-          requests.push({
-            deleteDimension: {
-              range: {
-                sheetId: sheetId,
-                dimension: "ROWS",
-                startIndex: 4 // Linha 5 (zero-based)
-              }
-            }
-          });
-        }
-      });
-      if (requests.length > 0) {
-        await fetch(
+
+      if (clearRequests.length > 0) {
+        const clearResponse = await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${newSpreadsheetId}:batchUpdate`,
           {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${tempAccessToken}`,
+              "Authorization": `Bearer ${accessToken}`,
               "Content-Type": "application/json"
             },
-            body: JSON.stringify({ requests })
+            body: JSON.stringify({ requests: clearRequests })
           }
         );
+
+        if (!clearResponse.ok) {
+          const error = await clearResponse.json();
+          console.warn("Aviso: Não foi possível limpar algumas linhas: " + (error.error && error.error.message ? error.error.message : ""));
+        }
       }
+
+      document.getElementById("spreadsheetId").value = newSpreadsheetId;
+      salvarConfiguracoes();
+
       mostrarAlertaCentralizado(
-        `Planilha criada com sucesso!<br><a href="https://docs.google.com/spreadsheets/d/${newSpreadsheetId}" target="_blank">Abrir nova planilha</a>`
+        `Planilha copiada com sucesso!<br><a href="https://docs.google.com/spreadsheets/d/${newSpreadsheetId}" target="_blank">Abrir nova planilha</a>`
       );
+
     } catch (error) {
       mostrarAlertaCentralizado("Erro ao criar cópia: " + error.message);
     }
   }
-  // No popup, envie o token temporário de volta para a janela principal
-  if (window.opener && window.location.hash.includes('access_token')) {
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-    const token = params.get('access_token');
-    // Detecta se é para o fluxo temporário do Drive
-    if (window.name === 'DriveAuth') {
-      window.opener.postMessage({ type: 'oauth_token_drive', token }, window.location.origin);
-    } else {
-      window.opener.postMessage({ type: 'oauth_token', hash: window.location.hash }, window.location.origin);
-    }
-  }
 
-  // Função para salvar configurações no localStorage
   function salvarConfiguracoes() {
-    const userEmail = document.getElementById("userEmail").value;
+    const userEmailSalvar = document.getElementById("userEmail").value;
     const spreadsheetId = document.getElementById("spreadsheetId").value;
     
-    localStorage.setItem("cema_user_email", userEmail);
+    localStorage.setItem("cema_user_email", userEmailSalvar);
     localStorage.setItem("cema_spreadsheet_id", spreadsheetId);
   }
 
-  // Função para carregar configurações do localStorage
   function carregarConfiguracoes() {
-    const userEmail = localStorage.getItem("cema_user_email");
+    const userEmailCarregar = localStorage.getItem("cema_user_email");
     const spreadsheetId = localStorage.getItem("cema_spreadsheet_id");
     
-    if (userEmail) {
+    if (userEmailCarregar) {
       const emailInput = document.getElementById("userEmail");
       if (emailInput) {
-        emailInput.value = userEmail;
+        emailInput.value = userEmailCarregar;
+        controlarAcessoPorEmail(userEmailCarregar);
       }
     }
     
@@ -1168,38 +1220,39 @@
     }
   }
 
-  // Event listeners para salvar configurações
-  const userEmailElement = document.getElementById("userEmail");
+  const userEmailElementConfig = document.getElementById("userEmail");
   const spreadsheetIdElement = document.getElementById("spreadsheetId");
-  if (userEmailElement) {
-    userEmailElement.addEventListener("change", salvarConfiguracoes);
+  if (userEmailElementConfig) {
+    userEmailElementConfig.addEventListener("change", salvarConfiguracoes);
   }
   if (spreadsheetIdElement) {
     spreadsheetIdElement.addEventListener("change", salvarConfiguracoes);
   }
 
-  // Salvar parceiros quando modificados
   function salvarParceirosAposModificacao() {
     salvarParceiros();
   }
 
-  // Função para formatar data brasileira
   function formatarDataBrasileira(data) {
     if (!data) return "";
     const [ano, mes, dia] = data.split("-");
     return `${dia}/${mes}/${ano}`;
   }
 
-  // Função para converter data brasileira para formato ISO
   function converterDataParaISO(data) {
     if (!data) return "";
     const [dia, mes, ano] = data.split("/");
     return `${ano}-${mes}-${dia}`;
   }
 
-  // Função para exportar relatório completo
   async function exportarRelatorioCompleto() {
-    // Verificar se o token foi carregado corretamente
+    const emailInput = document.getElementById("userEmail");
+    const userEmailRelatorio = emailInput ? emailInput.value : '';
+    if (!verificarEmailAutorizado(userEmailRelatorio)) {
+      mostrarAlertaCentralizado('Acesso restrito. Apenas emails autorizados podem gerar relatórios.');
+      return;
+    }
+    
     if (!accessToken) {
       const savedToken = sessionStorage.getItem('oauth_access_token');
       if (savedToken) {
@@ -1208,7 +1261,6 @@
     }
     
     const spreadsheetId = document.getElementById("spreadsheetId").value;
-    const userEmail = document.getElementById("userEmail").value.trim();
 
     if (!accessToken) {
       mostrarAlertaCentralizado("Por favor, faça login com Gmail primeiro");
@@ -1218,7 +1270,7 @@
       mostrarAlertaCentralizado("Por favor, informe o ID da planilha");
       return;
     }
-    if (!userEmail) {
+    if (!userEmailRelatorio) {
       mostrarAlertaCentralizado("Por favor, preencha o e-mail Gmail antes de gerar o relatório.");
       return;
     }
@@ -1226,15 +1278,12 @@
     mostrarStatus("Gerando relatório completo...", "info");
 
     try {
-      // Criar aba de relatório
       const relatorioData = [];
 
-      // Cabeçalho do relatório
       relatorioData.push(["CEMA IMOBILIÁRIA - RELATÓRIO ANUAL"]);
       relatorioData.push(["Gerado em:", new Date().toLocaleDateString("pt-BR")]);
       relatorioData.push([]);
 
-      // Resumo por mês
       relatorioData.push(["RESUMO POR MÊS"]);
       relatorioData.push([
         "Mês",
@@ -1245,7 +1294,6 @@
         "Felipe",
       ]);
 
-      // Tabela de serviços
       relatorioData.push([]);
       relatorioData.push(["TABELA DE SERVIÇOS"]);
       relatorioData.push(["Serviço", "Valor"]);
@@ -1254,7 +1302,6 @@
         relatorioData.push([servico, valor]);
       });
 
-      // Criar/atualizar aba de relatório
       const sheetName = "Relatório_Anual";
 
       try {
@@ -1280,10 +1327,8 @@
           },
         );
       } catch (error) {
-        // Aba já existe
       }
 
-      // Limpar e adicionar dados
       await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A1:clear`,
         {
@@ -1311,7 +1356,6 @@
       if (response.ok) {
         const mensagemSucesso = `Relatório completo gerado com sucesso!\n\nPlanilha: ${spreadsheetId}\nAba: Relatório_Anual\nData: ${new Date().toLocaleDateString("pt-BR")}\n\nO relatório está disponível na planilha!`;
         mostrarStatus(mensagemSucesso, "success");
-        // Abrir a planilha em nova aba
         window.open(`https://docs.google.com/spreadsheets/d/${spreadsheetId}`, '_blank');
       } else {
         throw new Error("Erro ao gerar relatório");
@@ -1321,7 +1365,6 @@
     }
   }
 
-  // Validação dos campos de parceiro
   function validarCamposParceiro() {
     const nomeInput = document.getElementById("partnerName");
     const percentualInput = document.getElementById("partnerPercentage");
@@ -1335,13 +1378,11 @@
     let nomeValido = nome.length > 0;
     let percentualValido = percentual.length > 0 && !isNaN(percentualNum) && percentualNum > 0 && percentualNum <= 100;
 
-    // Reset classes e feedback
     nomeInput.classList.remove("is-invalid", "is-valid");
     percentualInput.classList.remove("is-invalid", "is-valid");
     nomeFeedback.style.display = "none";
     percentualFeedback.style.display = "none";
 
-    // Validação visual estilo Bootstrap
     if (!nomeValido && nome.length > 0) {
       nomeInput.classList.add("is-invalid");
       nomeFeedback.style.display = "block";
@@ -1355,12 +1396,10 @@
       percentualInput.classList.add("is-valid");
     }
 
-    // Não desabilitar o botão - deixar a função adicionarParceiro mostrar os alertas
     btnAdd.disabled = false;
     return nomeValido && percentualValido;
   }
 
-  // Função para mostrar alerta centralizado na tela
   function mostrarAlertaCentralizado(msg) {
     let alerta = document.getElementById('centeredAlert');
     if (!alerta) {
@@ -1371,15 +1410,20 @@
     }
     alerta.textContent = msg;
     alerta.style.display = 'block';
-    // Esconde após 3 segundos
     clearTimeout(window._centeredAlertTimeout);
     window._centeredAlertTimeout = setTimeout(() => {
       alerta.style.display = 'none';
     }, 3000);
   }
 
-  // Função para adicionar novo serviço personalizado
   function adicionarNovoServico() {
+    const emailInput = document.getElementById("userEmail");
+    const userEmailAdicionar = emailInput ? emailInput.value : '';
+    if (!verificarEmailAutorizado(userEmailAdicionar)) {
+      mostrarAlertaCentralizado('Acesso restrito. Apenas emails autorizados podem adicionar novos serviços.');
+      return;
+    }
+    
     const nomeInput = document.getElementById('novoServicoNome');
     const valorInput = document.getElementById('novoServicoValor');
     const nome = nomeInput.value.trim();
@@ -1396,24 +1440,26 @@
       mostrarAlertaCentralizado('Já existe um serviço com esse nome.');
       return;
     }
-    // Adicionar ao objeto de valores
     servicosValores[nome] = valor;
-    // Adicionar visualmente
     const grid = document.getElementById('servicesGrid');
     const div = document.createElement('div');
     div.className = 'service-item';
     div.innerHTML = `<span>${nome}</span><input type="number" class="service-value-input" data-nome="${nome}" value="${valor}" min="0" step="0.01" style="width: 90px; margin-left: 8px;">`;
     grid.appendChild(div);
-    // Limpar campos
     nomeInput.value = '';
     valorInput.value = '';
-    // Atualizar selects de serviço nas linhas da tabela
     atualizarSelectsServicos();
     ativarListenersValoresServicos();
   }
 
-  // Função para remover serviços adicionados
   function removerServicoAdicionado() {
+    const emailInput = document.getElementById("userEmail");
+    const userEmailRemover = emailInput ? emailInput.value : '';
+    if (!verificarEmailAutorizado(userEmailRemover)) {
+      mostrarAlertaCentralizado('Acesso restrito. Apenas emails autorizados podem remover serviços.');
+      return;
+    }
+    
     const nomeInput = document.getElementById('novoServicoNome');
     const nome = nomeInput.value.trim();
     
@@ -1422,7 +1468,6 @@
       return;
     }
     
-    // Verificar se é um serviço padrão (não pode ser removido)
     const servicosPadrao = [
       "Registro com financiamento", "Registro à vista", "Averbação", 
       "Guia de Laudêmio do SPU", "Laudêmio da prefeitura", "Laudêmio das famílias",
@@ -1440,10 +1485,8 @@
       return;
     }
     
-    // Remover do objeto
     delete servicosValores[nome];
     
-    // Remover visualmente
     const grid = document.getElementById('servicesGrid');
     const serviceItems = grid.querySelectorAll('.service-item');
     serviceItems.forEach(item => {
@@ -1453,23 +1496,19 @@
       }
     });
     
-    // Limpar campos
     nomeInput.value = '';
     document.getElementById('novoServicoValor').value = '';
     
-    // Atualizar selects de serviço nas linhas da tabela
     atualizarSelectsServicos();
     ativarListenersValoresServicos();
     
     mostrarAlertaCentralizado(`Serviço "${nome}" removido com sucesso!`);
   }
 
-  // Atualizar selects de serviço nas linhas da tabela
   function atualizarSelectsServicos() {
     const selects = document.querySelectorAll('#corpoTabela select');
     selects.forEach(select => {
       const valorAtual = select.value;
-      // Limpar opções
       select.innerHTML = '<option value="">Selecione o serviço</option>';
       Object.keys(servicosValores).forEach(nome => {
         const opt = document.createElement('option');
@@ -1481,7 +1520,6 @@
     });
   }
 
-  // Função para ativar listeners nos inputs de valor dos serviços
   function ativarListenersValoresServicos() {
     document.querySelectorAll('.service-value-input').forEach(input => {
       input.addEventListener('input', function() {
@@ -1499,28 +1537,25 @@
     const corpoTabela = document.getElementById("corpoTabela");
     if (corpoTabela) {
       corpoTabela.innerHTML = "";
-      adicionarLinha(); // Isso já chama atualizarSelectsServicos()
-      calcularValores(); // Atualiza o resumo após limpar
+      adicionarLinha();
+      calcularValores(); 
       mostrarAlertaCentralizado("Tabela limpa! Pronto para nova inserção.");
     }
   }
 
-  // Inicialização
   document.addEventListener("DOMContentLoaded", function () {
-    // Verificar se há um callback OAuth2 na URL
     if (window.location.hash && window.location.hash.includes('access_token')) {
       processarCallbackOAuth2();
     }
     
-    // Carregar valores salvos antes de qualquer manipulação
     carregarConfiguracoes();
-    // Adicionar listeners após restaurar valores
-    const userEmailInput = document.getElementById("userEmail");
+    const userEmailInputListener = document.getElementById("userEmail");
     const spreadsheetIdInput = document.getElementById("spreadsheetId");
     
-    if (userEmailInput) {
-      userEmailInput.addEventListener('input', function() {
+    if (userEmailInputListener) {
+      userEmailInputListener.addEventListener('input', function() {
         localStorage.setItem("cema_user_email", this.value);
+        controlarAcessoPorEmail(this.value);
       });
     }
     
@@ -1533,7 +1568,6 @@
     verificarTokenSalvo();
     adicionarLinha();
 
-    // Definir mês atual
     const hoje = new Date();
     const mesAtual = hoje.getFullYear() + "-" + String(hoje.getMonth() + 1).padStart(2, "0");
     const mesElement = document.getElementById("mes");
@@ -1541,28 +1575,42 @@
       mesElement.value = mesAtual;
     }
     
-    // Calcular valores iniciais
     setTimeout(() => {
       calcularValores();
+      const emailInput = document.getElementById("userEmail");
+      if (emailInput && emailInput.value) {
+        controlarAcessoPorEmail(emailInput.value);
+      }
     }, 100);
 
-    // Configurar ícones de olho para mostrar/esconder senhas
-    configurarIconesOlho();
-    
-    // Ativar listeners de valores dos serviços
-    ativarListenersValoresServicos();
+  configurarIconesOlho();
+  
+  ativarListenersValoresServicos();
+  
+  aplicarEstadoInicialLinks();
   });
 
-  // Função para configurar os ícones de olho
+  function aplicarEstadoInicialLinks() {
+    const googleCloudLinks = document.querySelectorAll('a[href*="console.cloud.google.com"]');
+    googleCloudLinks.forEach(link => {
+      const isLoggedIn = accessToken && userProfile;
+      if (!isLoggedIn) {
+        link.classList.add('disabled');
+        link.title = 'Faça login para acessar';
+        link.removeAttribute('href');
+        link.removeAttribute('target');
+      }
+    });
+  }
+
   function configurarIconesOlho() {
-    // ID da Planilha
     const olhoSpreadsheet = document.getElementById('olho-spreadsheet');
     const inputSpreadsheet = document.getElementById('spreadsheetId');
     if (olhoSpreadsheet && inputSpreadsheet) {
       olhoSpreadsheet.addEventListener('click', function () {
         if (inputSpreadsheet.type === 'password') {
           inputSpreadsheet.type = 'text';
-          olhoSpreadsheet.style.opacity = 0.5; // opcional: visual feedback
+          olhoSpreadsheet.style.opacity = 0.5;
         } else {
           inputSpreadsheet.type = 'password';
           olhoSpreadsheet.style.opacity = 1;
@@ -1570,14 +1618,13 @@
       });
     }
 
-    // E-mail Gmail
     const olhoEmail = document.getElementById('olho-email');
     const inputEmail = document.getElementById('userEmail');
     if (olhoEmail && inputEmail) {
       olhoEmail.addEventListener('click', function () {
         if (inputEmail.type === 'password') {
           inputEmail.type = 'text';
-          olhoEmail.style.opacity = 0.5; // opcional: visual feedback
+          olhoEmail.style.opacity = 0.5;
         } else {
           inputEmail.type = 'password';
           olhoEmail.style.opacity = 1;
@@ -1586,14 +1633,8 @@
     }
   }
 
-  // Script para popup OAuth2 - enviar token para janela principal
-  if (window.opener && window.location.hash.includes('access_token')) {
-    try {
-      window.opener.postMessage({ type: 'oauth_token', hash: window.location.hash }, window.location.origin);
-    } catch (e) {}
-  }
 
-  // Exportar funções para uso global
+
   window.adicionarParceiro = adicionarParceiro;
   window.removerParceiro = removerParceiro;
   window.adicionarLinha = adicionarLinha;
@@ -1612,5 +1653,8 @@
   window.fazerLogout = fazerLogout;
   window.verificarTokenSalvo = verificarTokenSalvo;
   window.validarCamposParceiro = validarCamposParceiro;
+  window.verificarEmailAutorizado = verificarEmailAutorizado;
+  window.controlarAcessoPorEmail = controlarAcessoPorEmail;
+  window.obterClientIdPorEmail = obterClientIdPorEmail;
 })();
 
