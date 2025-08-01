@@ -67,13 +67,13 @@
         link.classList.add('disabled');
         link.title = 'Acesso restrito - Apenas emails autorizados';
         // Remover o href para evitar cliques
-        link.removeAttribute('href');
+        // link.removeAttribute('href');
         link.removeAttribute('target');
       } else {
         link.classList.remove('disabled');
         link.title = '';
         // Restaurar o href
-        link.href = 'https://console.cloud.google.com';
+        // link.href = 'https://console.cloud.google.com';
         link.target = '_blank';
       }
     });
