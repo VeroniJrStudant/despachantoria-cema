@@ -17,3 +17,6 @@ node_modules/
 
 # Cache
 .cache/ 
+
+# Configuração para teste
+config.js
