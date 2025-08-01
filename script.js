@@ -1731,9 +1731,9 @@
   // Ativar listeners de valores dos serviços
   ativarListenersValoresServicos();
   
-  // Aplicar estado inicial aos links (desabilitados antes do login)
-  aplicarEstadoInicialLinks();
-  });
+  // // Aplicar estado inicial aos links (desabilitados antes do login)
+  // aplicarEstadoInicialLinks();
+  // });
 
   // Função para aplicar estado inicial aos links
   // function aplicarEstadoInicialLinks() {
