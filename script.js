@@ -1731,25 +1731,25 @@
   // Ativar listeners de valores dos serviços
   ativarListenersValoresServicos();
   
-  // // Aplicar estado inicial aos links (desabilitados antes do login)
-  // aplicarEstadoInicialLinks();
-  // });
+  // Aplicar estado inicial aos links (desabilitados antes do login)
+  aplicarEstadoInicialLinks();
+  });
 
-  // Função para aplicar estado inicial aos links
-  // function aplicarEstadoInicialLinks() {
-  //   const googleCloudLinks = document.querySelectorAll('a[href*="console.cloud.google.com"]');
-  //   googleCloudLinks.forEach(link => {
-  //     // Verificar se o usuário está logado
-  //     const isLoggedIn = accessToken && userProfile;
-  //     if (!isLoggedIn) {
-  //       link.classList.add('disabled');
-  //       link.title = 'Faça login para acessar';
-  //       // Remover o href para evitar cliques
-  //       link.removeAttribute('href');
-  //       link.removeAttribute('target');
-  //     }
-  //   });
-  // }
+  Função para aplicar estado inicial aos links
+  function aplicarEstadoInicialLinks() {
+    const googleCloudLinks = document.querySelectorAll('a[href*="console.cloud.google.com"]');
+    googleCloudLinks.forEach(link => {
+      // Verificar se o usuário está logado
+      const isLoggedIn = accessToken && userProfile;
+      if (!isLoggedIn) {
+        // link.classList.add('disabled');
+        link.title = 'Faça login para acessar';
+        // Remover o href para evitar cliques
+        // link.removeAttribute('href');
+        link.removeAttribute('target');
+      }
+    });
+  }
 
   // Função para configurar os ícones de olho
   function configurarIconesOlho() {
