@@ -665,7 +665,7 @@
     const totalDespesasElement = document.getElementById("totalDespesas");
     const totalLiquidoElement = document.getElementById("totalLiquido");
     const empresaBrutoElement = document.getElementById("empresaBruto");
-    const cemaDespesasElement = document.getElementById("cemaDespesas");
+    const cemaDespesasElement = document.getElementById("empresaDespesas");
     const empresaLiquidoElement = document.getElementById("empresaLiquido");
 
     if (totalFaturadoElement) totalFaturadoElement.textContent = `R$ ${totalFaturado.toFixed(2)}`;
