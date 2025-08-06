@@ -786,7 +786,7 @@
         "Protocolo",
         "Valor Cobrado",
         "Despesas",
-        "EMPRESA (65%)",
+        "Empresa (65%)",
         "Parceiros (35%)",
         "Status",
         "Parceiros Configurados"
