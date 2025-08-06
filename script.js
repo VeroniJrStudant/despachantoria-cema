@@ -67,13 +67,13 @@
         link.classList.add('disabled');
         link.title = 'Acesso restrito - Apenas emails autorizados';
         // Remover o href para evitar cliques
-        // link.removeAttribute('href');
+        link.removeAttribute('href');
         link.removeAttribute('target');
       } else {
         link.classList.remove('disabled');
         link.title = '';
         // Restaurar o href
-        // link.href = 'https://console.cloud.google.com';
+        link.href = 'https://console.cloud.google.com';
         link.target = '_blank';
       }
     });
@@ -102,6 +102,7 @@
     window.CONFIG = {
       GOOGLE_CLIENT_ID: '',
       // GOOGLE_REDIRECT_URI: 'https://despachante.cemaimobiliaria.com.br/',
+      GOOGLE_REDIRECT_URI: "https://veronijrstudant.github.io/despachantoria-cema/"
       GOOGLE_SCOPE: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive'
     };
   }
