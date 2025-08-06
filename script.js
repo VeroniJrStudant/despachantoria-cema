@@ -116,7 +116,7 @@
   const servicosValores = {
     "Registro com financiamento": 800.0,
     "Registro à vista": 500.0,
-    Averbação: 300.0,
+    "Averbação": 300.0,
     "Guia de Laudêmio do SPU": 100.0,
     "Laudêmio da prefeitura": 700.0,
     "Laudêmio das famílias": 700.0,
@@ -643,37 +643,37 @@
       totalDespesas += despesas;
 
       // Cálculo dos percentuais
-      const valorCema = valorCobrado * 0.65 - despesas;
+      const valorEmpresa = valorCobrado * 0.65 - despesas;
       const valorParceiros = valorCobrado * 0.35 + despesas;
 
       // Atualizar as células de valores calculados
       const valorFields = linha.querySelectorAll(".valor-field");
       if (valorFields.length >= 4) {
-        valorFields[2].textContent = `R$ ${valorCema.toFixed(2)}`;
+        valorFields[2].textContent = `R$ ${valorEmpresa.toFixed(2)}`;
         valorFields[3].textContent = `R$ ${valorParceiros.toFixed(2)}`;
       }
     });
 
     // Atualizar resumo apenas se os elementos existirem
     const totalLiquido = totalFaturado - totalDespesas;
-    const cemaBruto = totalFaturado * 0.65;
-    const cemaLiquido = cemaBruto - totalDespesas;
+    const empresaBruto = totalFaturado * 0.65;
+    const empresaLiquido = empresaBruto - totalDespesas;
     const parceirosBase = totalFaturado * 0.35;
     const parceirosTotal = parceirosBase + totalDespesas;
 
     const totalFaturadoElement = document.getElementById("totalFaturado");
     const totalDespesasElement = document.getElementById("totalDespesas");
     const totalLiquidoElement = document.getElementById("totalLiquido");
-    const cemaBrutoElement = document.getElementById("cemaBruto");
+    const empresaBrutoElement = document.getElementById("empresaBruto");
     const cemaDespesasElement = document.getElementById("cemaDespesas");
-    const cemaLiquidoElement = document.getElementById("cemaLiquido");
+    const empresaLiquidoElement = document.getElementById("empresaLiquido");
 
     if (totalFaturadoElement) totalFaturadoElement.textContent = `R$ ${totalFaturado.toFixed(2)}`;
     if (totalDespesasElement) totalDespesasElement.textContent = `R$ ${totalDespesas.toFixed(2)}`;
     if (totalLiquidoElement) totalLiquidoElement.textContent = `R$ ${totalLiquido.toFixed(2)}`;
-    if (cemaBrutoElement) cemaBrutoElement.textContent = `R$ ${cemaBruto.toFixed(2)}`;
+    if (empresaBrutoElement) empresaBrutoElement.textContent = `R$ ${empresaBruto.toFixed(2)}`;
     if (cemaDespesasElement) cemaDespesasElement.textContent = `R$ ${totalDespesas.toFixed(2)}`;
-    if (cemaLiquidoElement) cemaLiquidoElement.textContent = `R$ ${cemaLiquido.toFixed(2)}`;
+    if (empresaLiquidoElement) empresaLiquidoElement.textContent = `R$ ${empresaLiquido.toFixed(2)}`;
 
     // Atualizar resumo dos parceiros
     atualizarResumoParceiros(totalFaturado, totalDespesas);
@@ -786,7 +786,7 @@
         "Protocolo",
         "Valor Cobrado",
         "Despesas",
-        "CEMA (65%)",
+        "EMPRESA (65%)",
         "Parceiros (35%)",
         "Status",
         "Parceiros Configurados"
@@ -802,7 +802,7 @@
         const status = statusInput ? statusInput.value : "";
 
         if (valorCobrado > 0) {
-          const valorCema = valorCobrado * 0.65 - despesas;
+          const valorEmpresa = valorCobrado * 0.65 - despesas;
           const valorParceiros = valorCobrado * 0.35 + despesas;
 
           dados.push([
@@ -818,7 +818,7 @@
             inputs[9].value, // Protocolo
             valorCobrado,
             despesas,
-            valorCema,
+            valorEmpresa,
             valorParceiros,
             status,
             parceiros.map(p => `${p.nome} (${p.percentual}%)`).join(", ") || "Nenhum"
@@ -1399,8 +1399,8 @@
         "Total Faturado",
         "Total Despesas",
         "Líquido",
-        "CEMA",
-        "Felipe",
+        "Empresa",
+        "Parceiro",
       ]);
 
       // Tabela de serviços
