@@ -101,7 +101,7 @@
     // Criar CONFIG padrão para evitar erros
     window.CONFIG = {
       GOOGLE_CLIENT_ID: '',
-      GOOGLE_REDIRECT_URI: 'https://despachante.cemaimobiliaria.com.br/',
+      // GOOGLE_REDIRECT_URI: 'https://despachante.cemaimobiliaria.com.br/',
       GOOGLE_SCOPE: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive'
     };
   }
@@ -310,7 +310,7 @@
           userProfile = { email: userEmailFallback, name: 'Usuário' };
           
           // Salvar e-mail no localStorage para persistir
-          localStorage.setItem("cema_user_email", userEmailFallback);
+          localStorage.setItem("empresa_user_email", userEmailFallback);
           
           // Atualizar campo de e-mail na interface
           const emailInput = document.getElementById("userEmail");
@@ -339,7 +339,7 @@
         userProfile = { email: userEmailError, name: 'Usuário' };
         
         // Salvar e-mail no localStorage para persistir
-        localStorage.setItem("cema_user_email", userEmailError);
+        localStorage.setItem("empresa_user_email", userEmailError);
         
         // Atualizar campo de e-mail na interface
         const emailInput = document.getElementById("userEmail");
@@ -553,11 +553,11 @@
   }
 
   function salvarParceiros() {
-    localStorage.setItem("cema_parceiros", JSON.stringify(parceiros));
+    localStorage.setItem("empresa_parceiros", JSON.stringify(parceiros));
   }
 
   function carregarParceiros() {
-    const parceirosSalvos = localStorage.getItem("cema_parceiros");
+    const parceirosSalvos = localStorage.getItem("empresa_parceiros");
     
     if (parceirosSalvos) {
       parceiros = JSON.parse(parceirosSalvos);
@@ -665,14 +665,14 @@
     const totalDespesasElement = document.getElementById("totalDespesas");
     const totalLiquidoElement = document.getElementById("totalLiquido");
     const empresaBrutoElement = document.getElementById("empresaBruto");
-    const cemaDespesasElement = document.getElementById("empresaDespesas");
+    const empresaDespesasElement = document.getElementById("empresaDespesas");
     const empresaLiquidoElement = document.getElementById("empresaLiquido");
 
     if (totalFaturadoElement) totalFaturadoElement.textContent = `R$ ${totalFaturado.toFixed(2)}`;
     if (totalDespesasElement) totalDespesasElement.textContent = `R$ ${totalDespesas.toFixed(2)}`;
     if (totalLiquidoElement) totalLiquidoElement.textContent = `R$ ${totalLiquido.toFixed(2)}`;
     if (empresaBrutoElement) empresaBrutoElement.textContent = `R$ ${empresaBruto.toFixed(2)}`;
-    if (cemaDespesasElement) cemaDespesasElement.textContent = `R$ ${totalDespesas.toFixed(2)}`;
+    if (empresaDespesasElement) empresaDespesasElement.textContent = `R$ ${totalDespesas.toFixed(2)}`;
     if (empresaLiquidoElement) empresaLiquidoElement.textContent = `R$ ${empresaLiquido.toFixed(2)}`;
 
     // Atualizar resumo dos parceiros
@@ -1116,7 +1116,7 @@
           },
           body: JSON.stringify({
             properties: {
-              title: "CEMA Imobiliária - Controle Financeiro",
+              title: "Empresa Teste - Controle Financeiro",
             },
             sheets: [
               {
@@ -1136,7 +1136,7 @@
 
         // Criar cabeçalho na aba de configuração
         const configData = [
-          ["CEMA IMOBILIÁRIA - CONTROLE FINANCEIRO"],
+          ["Empresa Teste - Controle Financeiro"],
           [""],
           ["Esta planilha foi criada automaticamente pelo sistema."],
           ["Cada mês será criado em uma aba separada."],
@@ -1158,7 +1158,7 @@
           },
         );
 
-        const mensagemSucesso = `Planilha criada com sucesso!\n\nID da Planilha: ${data.spreadsheetId}\nTítulo: CEMA Imobiliária - Controle Financeiro\nLink: ${data.spreadsheetUrl}\n\nA planilha foi configurada automaticamente!`;
+        const mensagemSucesso = `Planilha criada com sucesso!\n\nID da Planilha: ${data.spreadsheetId}\nTítulo: Empresa Teste - Setor de Serviços\nLink: ${data.spreadsheetUrl}\n\nA planilha foi configurada automaticamente!`;
         mostrarStatus(mensagemSucesso, "success");
       } else {
         const error = await response.json();
@@ -1202,7 +1202,7 @@
             "Authorization": `Bearer ${accessToken}`
           },
           body: JSON.stringify({
-            name: "CEMA Imobiliária - Controle Financeiro",
+            name: "Empresa Teste - Controle Financeiro",
             parents: [] // Copiar para a raiz do Drive
           })
         }
@@ -1293,14 +1293,14 @@
     const userEmailSalvar = document.getElementById("userEmail").value;
     const spreadsheetId = document.getElementById("spreadsheetId").value;
     
-    localStorage.setItem("cema_user_email", userEmailSalvar);
-    localStorage.setItem("cema_spreadsheet_id", spreadsheetId);
+    localStorage.setItem("empresa_user_email", userEmailSalvar);
+    localStorage.setItem("empresa_spreadsheet_id", spreadsheetId);
   }
 
   // Função para carregar configurações do localStorage
   function carregarConfiguracoes() {
-    const userEmailCarregar = localStorage.getItem("cema_user_email");
-    const spreadsheetId = localStorage.getItem("cema_spreadsheet_id");
+    const userEmailCarregar = localStorage.getItem("empresa_user_email");
+    const spreadsheetId = localStorage.getItem("empresa_spreadsheet_id");
     
     if (userEmailCarregar) {
       const emailInput = document.getElementById("userEmail");
@@ -1388,7 +1388,7 @@
       const relatorioData = [];
 
       // Cabeçalho do relatório
-      relatorioData.push(["CEMA IMOBILIÁRIA - RELATÓRIO ANUAL"]);
+      relatorioData.push(["Empresa Teste - Relatório Anual"]);
       relatorioData.push(["Gerado em:", new Date().toLocaleDateString("pt-BR")]);
       relatorioData.push([]);
 
@@ -1694,14 +1694,14 @@
     
     if (userEmailInputListener) {
       userEmailInputListener.addEventListener('input', function() {
-        localStorage.setItem("cema_user_email", this.value);
+        localStorage.setItem("empresa_user_email", this.value);
         controlarAcessoPorEmail(this.value);
       });
     }
     
     if (spreadsheetIdInput) {
       spreadsheetIdInput.addEventListener('input', function() {
-        localStorage.setItem("cema_spreadsheet_id", this.value);
+        localStorage.setItem("empresa_spreadsheet_id", this.value);
       });
     }
     carregarParceiros();
