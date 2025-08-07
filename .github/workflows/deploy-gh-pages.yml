@@ -23,7 +23,7 @@ jobs:
             GOOGLE_CLIENT_ID: '${{ secrets.GOOGLE_CLIENT_ID }}',
             GOOGLE_CLIENT_ID_NAO_AUTORIZADO: '${{ secrets.GOOGLE_CLIENT_ID_NAO_AUTORIZADO }}',
             GOOGLE_REDIRECT_URI: 'https://veronijrstudant.github.io/despachantoria-cema/',
-            GOOGLE_SCOPE: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive'
+            GOOGLE_SCOPE: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive',
           };
           EOF
 
@@ -33,7 +33,7 @@ jobs:
           cp script.js public/
           cp style.css public/ || true
           cp -r img public/ || true
-          cp CNAME public/ || true
+          # cp CNAME public/ || true
 
       - name: Publicar na branch gh-pages
         uses: peaceiris/actions-gh-pages@v4
