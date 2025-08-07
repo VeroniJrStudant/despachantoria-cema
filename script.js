@@ -102,7 +102,7 @@
     window.CONFIG = {
       GOOGLE_CLIENT_ID: '',
       // GOOGLE_REDIRECT_URI: 'https://despachante.cemaimobiliaria.com.br/',
-      GOOGLE_REDIRECT_URI: "https://veronijrstudant.github.io/despachantoria-cema/"
+      GOOGLE_REDIRECT_URI: 'https://veronijrstudant.github.io/despachantoria-cema/',
       GOOGLE_SCOPE: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive'
     };
   }
@@ -1736,7 +1736,7 @@
   aplicarEstadoInicialLinks();
   });
 
-  Função para aplicar estado inicial aos links
+  // Função para aplicar estado inicial aos links
   function aplicarEstadoInicialLinks() {
     const googleCloudLinks = document.querySelectorAll('a[href*="console.cloud.google.com"]');
     googleCloudLinks.forEach(link => {
